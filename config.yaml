@@ -1,0 +1,14 @@
+github:
+  organization: ecmwf
+  repositories:
+    - fdb
+    - eckit
+
+fetch_intervals:
+  issues: 30m
+  pull_requests: 10m
+  actions: 5m
+
+server:
+  port: 8080
+  host: "localhost"
