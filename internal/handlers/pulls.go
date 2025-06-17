@@ -1,6 +1,7 @@
 package handlers
 
 import (
+    "log"
     "net/http"
     "sort"
     "strconv"
@@ -11,6 +12,7 @@ import (
 
 func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
     prs, lastUpdate := h.storage.GetPullRequests()
+    log.Printf("Serving /pulls - PRs: %d", len(prs))
 
     // Get query params
     page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -70,7 +72,14 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
         CSSFiles:     cssFiles,
     }
 
+    if h.prTemplate == nil {
+        log.Printf("ERROR: prTemplate is nil!")
+        http.Error(w, "Template not initialized", http.StatusInternalServerError)
+        return
+    }
+
     if err := h.prTemplate.Execute(w, data); err != nil {
+        log.Printf("Error executing PR template: %v", err)
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
 }

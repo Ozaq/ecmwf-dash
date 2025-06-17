@@ -414,6 +414,31 @@ body::before {
     box-shadow: 0 0 5px currentColor;
 }
 
+.check-dot::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #000;
+    color: #0f0;
+    border: 1px solid #0f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 999;
+    box-shadow: 0 0 6px #0f0;
+}
+
+.check-dot:hover::after {
+    opacity: 1;
+}
+
 .check-dot.success { background: #0f0; }
 .check-dot.failure { background: #f00; }
 .check-dot.running { 

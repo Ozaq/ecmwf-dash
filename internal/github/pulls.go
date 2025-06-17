@@ -3,6 +3,7 @@ package github
 import (
     "context"
     "fmt"
+    "time"
 
     "github.com/google/go-github/v66/github"
 )
@@ -82,6 +83,7 @@ func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number in
     }
 
     reviewMap := make(map[string]*Reviewer)
+    reviewTimes := make(map[string]time.Time)
     approved := false
     changesRequested := false
 
@@ -92,12 +94,13 @@ func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number in
         
         login := review.GetUser().GetLogin()
         // Keep only the latest review per user
-        if existing, ok := reviewMap[login]; !ok || review.GetSubmittedAt().After(existing.State) {
+        if _, ok := reviewMap[login]; !ok || review.GetSubmittedAt().Time.After(reviewTimes[login]) {
             reviewMap[login] = &Reviewer{
                 Login:  login,
                 Avatar: review.GetUser().GetAvatarURL(),
                 State:  review.GetState(),
             }
+            reviewTimes[login] = review.GetSubmittedAt().Time
         }
 
         if review.GetState() == "APPROVED" {
@@ -149,6 +152,15 @@ func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number in
             Conclusion: check.GetConclusion(),
             URL:        check.GetHTMLURL(),
         })
+        
+        // Count checks
+        if check.GetStatus() == "in_progress" {
+            pr.ChecksRunning++
+        } else if check.GetConclusion() == "success" {
+            pr.ChecksSuccess++
+        } else if check.GetConclusion() == "failure" {
+            pr.ChecksFailure++
+        }
     }
 
     return nil

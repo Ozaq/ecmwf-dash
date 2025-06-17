@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECMWF GitHub Dashboard - Pull Requests</title>
-    <link rel="stylesheet" href="/static/{{.CSSFile}}">
+    <link rel="stylesheet" href="static/{{.CSSFile}}">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>ECMWF GitHub Dashboard - Pull Requests</h1>
             <nav class="nav-links">
-                <a href="/">Issues</a>
-                <a href="/pulls" class="active">Pull Requests</a>
+                <a href="issues">Issues</a>
+                <a href="pulls" class="active">Pull Requests</a>
             </nav>
             <div class="header-info">
                 <div class="stats">
@@ -129,16 +129,9 @@
                                     {{end}}
                                 </div>
                                 <span class="checks-summary">
-                                    {{$success := 0}}{{$failure := 0}}{{$running := 0}}
-                                    {{range .Checks}}
-                                        {{if eq .Status "in_progress"}}{{$running = add $running 1}}
-                                        {{else if eq .Conclusion "success"}}{{$success = add $success 1}}
-                                        {{else if eq .Conclusion "failure"}}{{$failure = add $failure 1}}
-                                        {{end}}
-                                    {{end}}
-                                    {{if gt $success 0}}<span class="check-count success">{{$success}} ✓</span>{{end}}
-                                    {{if gt $failure 0}}<span class="check-count failure">{{$failure}} ✗</span>{{end}}
-                                    {{if gt $running 0}}<span class="check-count running">{{$running}} ⏳</span>{{end}}
+                                    {{if gt .ChecksSuccess 0}}<span class="check-count success">{{.ChecksSuccess}} ✓</span>{{end}}
+                                    {{if gt .ChecksFailure 0}}<span class="check-count failure">{{.ChecksFailure}} ✗</span>{{end}}
+                                    {{if gt .ChecksRunning 0}}<span class="check-count running">{{.ChecksRunning}} ⏳</span>{{end}}
                                 </span>
                             </div>
                             {{end}}
@@ -218,7 +211,7 @@
     function changeStyle(select) {
         const newCSS = select.value;
         const link = document.querySelector('link[rel="stylesheet"]');
-        link.href = `/static/${newCSS}`;
+        link.href = `static/${newCSS}`;
         
         localStorage.setItem('preferredCSS', newCSS);
         

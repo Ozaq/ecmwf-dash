@@ -45,6 +45,11 @@ type PullRequest struct {
     Comments        int
     ReviewComments  int
     Checks          []Check
+    
+    // Check counts
+    ChecksSuccess   int
+    ChecksFailure   int
+    ChecksRunning   int
 }
 
 type Reviewer struct {

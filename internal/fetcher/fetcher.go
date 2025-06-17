@@ -25,16 +25,12 @@ func New(cfg *config.Config, gh *github.Client, storage *storage.Memory) *Fetche
 }
 
 func (f *Fetcher) Start(ctx context.Context) {
-    // Initial fetch
-    f.fetchIssues(ctx)
-    f.fetchPullRequests(ctx)
-
-    // Start periodic fetches
     go f.runIssuesFetcher(ctx)
     go f.runPRsFetcher(ctx)
 }
 
 func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
+    f.fetchIssues(ctx)
     ticker := time.NewTicker(f.cfg.FetchIntervals.Issues)
     defer ticker.Stop()
 
@@ -62,6 +58,7 @@ func (f *Fetcher) fetchIssues(ctx context.Context) {
 }
 
 func (f *Fetcher) runPRsFetcher(ctx context.Context) {
+    f.fetchPullRequests(ctx)
     ticker := time.NewTicker(f.cfg.FetchIntervals.PullRequests)
     defer ticker.Stop()
 
