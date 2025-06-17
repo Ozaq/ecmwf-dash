@@ -1,18 +1,8 @@
 function changeStyle(select) {
     const newCSS = select.value;
     const link = document.querySelector('link[rel="stylesheet"]');
-    
     // Force reload by adding timestamp to prevent caching
     link.href = `static/${newCSS}?t=${Date.now()}`;
-    
-    // Apply theme class to body for CSS variable overrides
-    document.body.className = '';
-    if (newCSS.includes('cyberpunk')) {
-        document.body.className = 'cyberpunk-theme';
-    } else if (newCSS.includes('retro')) {
-        document.body.className = 'retro-theme';
-    }
-    
     localStorage.setItem('preferredCSS', newCSS);
 }
 
@@ -30,13 +20,6 @@ function changeStyle(select) {
     const link = document.querySelector('link[rel="stylesheet"]');
     if (link && link.href !== `static/${savedCSS}`) {
         link.href = `static/${savedCSS}`;
-    }
-    
-    // Apply theme class immediately
-    if (savedCSS.includes('cyberpunk')) {
-        document.body.className = 'cyberpunk-theme';
-    } else if (savedCSS.includes('retro')) {
-        document.body.className = 'retro-theme';
     }
 })();
 
@@ -86,7 +69,7 @@ window.addEventListener('DOMContentLoaded', function() {
         });
         
         // Set the dropdown to match current CSS
-        const currentCSS = localStorage.getItem('preferredCSS') || 'default.css';
+        const currentCSS = localStorage.getItem('preferredCSS') || 'auto.css';
         select.value = currentCSS;
     }
 });
