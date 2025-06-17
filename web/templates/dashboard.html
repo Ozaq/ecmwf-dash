@@ -17,6 +17,14 @@
                     Showing {{if .Issues}}{{add (mul (add .CurrentPage -1) 100) 1}}-{{add (mul (add .CurrentPage -1) 100) (len .Issues)}}{{else}}0{{end}} of {{.TotalIssues}}
                 </div>
                 <div class="css-selector">
+                    <label for="refresh-select">Refresh Interval: </label>
+                    <select id="refresh-select">
+                        <option value="0">Off</option>
+                        <option value="60000">1 min</option>
+                        <option value="300000">5 min</option>
+                        <option value="600000">10 min</option>
+                        <option value="900000">15 min</option>
+                    </select>
                     <label for="style-select">Style: </label>
                     <select id="style-select" onchange="changeStyle(this)">
                         {{range .CSSFiles}}
@@ -152,6 +160,32 @@
         url.searchParams.set('css', newCSS);
         window.history.replaceState({}, '', url);
     }
+
+    (function () {
+        const dropdown = document.getElementById("refresh-select");
+        const saved = localStorage.getItem("refresh-select");
+        if (saved) dropdown.value = saved;
+
+        let timer = null;
+
+        function setRefresh(interval) {
+            if (timer) clearInterval(timer);
+            if (interval > 0) {
+                timer = setInterval(() => {
+                  window.location.reload();
+                }, interval);
+            }
+        }
+
+        dropdown.addEventListener("change", () => {
+          const interval = parseInt(dropdown.value, 10);
+          localStorage.setItem("refresh-select", interval);
+          setRefresh(interval);
+        });
+
+    // Set initial interval if saved
+    setRefresh(parseInt(dropdown.value, 10));
+    })();
     
     // Load preferred style on page load
     window.addEventListener('DOMContentLoaded', function() {
