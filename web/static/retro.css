@@ -26,6 +26,35 @@ body {
     animation: pulse 2s infinite;
 }
 
+.nav-links {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+
+.nav-links a {
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid #0f0;
+    background: #000;
+    color: #0f0;
+    letter-spacing: 1px;
+}
+
+.nav-links a:hover {
+    background: #001100;
+    text-decoration: none;
+    box-shadow: 0 0 5px #0f0;
+}
+
+.nav-links a.active {
+    background: #0f0;
+    color: #000;
+    font-weight: bold;
+}
+
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.7; }
@@ -297,3 +326,109 @@ body::before {
     color: #090;
     font-weight: bold;
 }
+
+/* PR specific styles */
+.draft-badge {
+    background: #ff0;
+    color: #000;
+    font-size: 10px;
+    padding: 2px 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 4px;
+}
+
+.branch-info {
+    font-size: 11px;
+    color: #090;
+    font-family: 'Courier New', Courier, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.review-status {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.review-status.approved { color: #0f0; }
+.review-status.changes_requested { color: #f00; }
+.review-status.pending { color: #999; }
+
+.reviewers {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.reviewer-avatar {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #000;
+    filter: grayscale(100%) brightness(1.5) sepia(100%) hue-rotate(90deg);
+}
+
+.reviewer-avatar.approved { border-color: #0f0; }
+.reviewer-avatar.changes { border-color: #f00; }
+
+.merge-status {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.merge-status.clean { color: #0f0; }
+.merge-status.blocked { color: #f00; }
+.merge-status.dirty { color: #ff0; }
+
+.comments-count {
+    font-size: 11px;
+    color: #090;
+}
+
+/* Checks matrix */
+.checks-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.checks-matrix {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    max-width: 300px;
+}
+
+.check-dot {
+    width: 8px;
+    height: 8px;
+    display: block;
+    transition: all 0.2s;
+}
+
+.check-dot:hover {
+    transform: scale(1.5);
+    box-shadow: 0 0 5px currentColor;
+}
+
+.check-dot.success { background: #0f0; }
+.check-dot.failure { background: #f00; }
+.check-dot.running { 
+    background: #ff0; 
+    animation: pulse 1s infinite;
+}
+.check-dot.neutral { background: #666; }
+
+.checks-summary {
+    font-size: 10px;
+    display: flex;
+    gap: 8px;
+    text-transform: uppercase;
+}
+
+.check-count.success { color: #0f0; }
+.check-count.failure { color: #f00; }
+.check-count.running { color: #ff0; }

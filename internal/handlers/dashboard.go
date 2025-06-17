@@ -16,9 +16,10 @@ import (
 const issuesPerPage = 100
 
 type Handler struct {
-    storage  *storage.Memory
-    template *template.Template
-    cssFile  string
+    storage    *storage.Memory
+    template   *template.Template
+    prTemplate *template.Template
+    cssFile    string
 }
 
 func New(storage *storage.Memory, tmpl *template.Template, cssFile string) *Handler {
@@ -27,6 +28,10 @@ func New(storage *storage.Memory, tmpl *template.Template, cssFile string) *Hand
         template: tmpl,
         cssFile:  cssFile,
     }
+}
+
+func (h *Handler) SetPRTemplate(tmpl *template.Template) {
+    h.prTemplate = tmpl
 }
 
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {

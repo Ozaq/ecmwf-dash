@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECMWF GitHub Dashboard</title>
+    <title>ECMWF GitHub Dashboard - Pull Requests</title>
     <link rel="stylesheet" href="/static/{{.CSSFile}}">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>ECMWF GitHub Dashboard - Issues</h1>
+            <h1>ECMWF GitHub Dashboard - Pull Requests</h1>
             <nav class="nav-links">
-                <a href="/" class="active">Issues</a>
-                <a href="/pulls">Pull Requests</a>
+                <a href="/">Issues</a>
+                <a href="/pulls" class="active">Pull Requests</a>
             </nav>
             <div class="header-info">
                 <div class="stats">
                     Last updated: {{.LastUpdate.Format "Jan 2, 15:04:05 MST"}} | 
-                    Total issues: {{.TotalIssues}} | 
-                    Showing {{if .Issues}}{{add (mul (add .CurrentPage -1) 100) 1}}-{{add (mul (add .CurrentPage -1) 100) (len .Issues)}}{{else}}0{{end}} of {{.TotalIssues}}
+                    Total PRs: {{.TotalPRs}} | 
+                    Showing {{if .PullRequests}}{{add (mul (add .CurrentPage -1) 100) 1}}-{{add (mul (add .CurrentPage -1) 100) (len .PullRequests)}}{{else}}0{{end}} of {{.TotalPRs}}
                 </div>
                 <div class="css-selector">
                     <div style="position: relative;">
@@ -79,6 +79,10 @@
                                 </span>
                             </a>
                         </th>
+                        <th>Branch</th>
+                        <th>Review</th>
+                        <th>Merge Status</th>
+                        <th>💬</th>
                         <th>
                             <a href="?sort=updated&order={{if and (eq .Sort "updated") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
                                 Last Activity
@@ -98,19 +102,44 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{range .Issues}}
+                    {{range .PullRequests}}
                     <tr>
                         <td>{{.Repository}}</td>
                         <td class="issue-number">#{{.Number}}</td>
                         <td>
                             <div>
-                                <a href="{{.URL}}" target="_blank">{{.Title}}</a>
+                                <a href="{{.URL}}" target="_blank">
+                                    {{if .Draft}}<span class="draft-badge">Draft</span> {{end}}{{.Title}}
+                                </a>
                             </div>
                             {{if .Labels}}
                             <div class="labels">
                                 {{range .Labels}}
                                 <span class="label" style="background-color: #{{.Color}}">{{.Name}}</span>
                                 {{end}}
+                            </div>
+                            {{end}}
+                            {{if .Checks}}
+                            <div class="checks-container">
+                                <div class="checks-matrix">
+                                    {{range .Checks}}
+                                    <a href="{{.URL}}" target="_blank" title="{{.Name}}: {{if eq .Status "completed"}}{{.Conclusion}}{{else}}{{.Status}}{{end}}" 
+                                       class="check-dot {{if eq .Status "in_progress"}}running{{else if eq .Conclusion "success"}}success{{else if eq .Conclusion "failure"}}failure{{else}}neutral{{end}}">
+                                    </a>
+                                    {{end}}
+                                </div>
+                                <span class="checks-summary">
+                                    {{$success := 0}}{{$failure := 0}}{{$running := 0}}
+                                    {{range .Checks}}
+                                        {{if eq .Status "in_progress"}}{{$running = add $running 1}}
+                                        {{else if eq .Conclusion "success"}}{{$success = add $success 1}}
+                                        {{else if eq .Conclusion "failure"}}{{$failure = add $failure 1}}
+                                        {{end}}
+                                    {{end}}
+                                    {{if gt $success 0}}<span class="check-count success">{{$success}} ✓</span>{{end}}
+                                    {{if gt $failure 0}}<span class="check-count failure">{{$failure}} ✗</span>{{end}}
+                                    {{if gt $running 0}}<span class="check-count running">{{$running}} ⏳</span>{{end}}
+                                </span>
                             </div>
                             {{end}}
                         </td>
@@ -122,6 +151,37 @@
                                 <span class="external-badge">external</span>
                                 {{end}}
                             </div>
+                        </td>
+                        <td class="branch-info">
+                            <span title="{{.BaseBranch}} ← {{.HeadBranch}}">{{.BaseBranch}} ← {{.HeadBranch}}</span>
+                        </td>
+                        <td>
+                            <div class="review-status {{.ReviewStatus}}">
+                                {{if eq .ReviewStatus "approved"}}✓ Approved
+                                {{else if eq .ReviewStatus "changes_requested"}}⚠ Changes
+                                {{else}}○ Pending{{end}}
+                            </div>
+                            {{if .Reviewers}}
+                            <div class="reviewers">
+                                {{range .Reviewers}}
+                                <img src="{{.Avatar}}" alt="{{.Login}}" title="{{.Login}}: {{.State}}" 
+                                     class="reviewer-avatar {{if eq .State "APPROVED"}}approved{{else if eq .State "CHANGES_REQUESTED"}}changes{{end}}">
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </td>
+                        <td>
+                            <span class="merge-status {{.MergeableState}}">
+                                {{if eq .MergeableState "clean"}}✓ Ready
+                                {{else if eq .MergeableState "blocked"}}⛔ Blocked
+                                {{else if eq .MergeableState "dirty"}}⚠ Conflicts
+                                {{else}}{{.MergeableState}}{{end}}
+                            </span>
+                        </td>
+                        <td class="comments-count">
+                            <span title="{{.Comments}} comments, {{.ReviewComments}} review comments">
+                                {{.Comments}}/{{.ReviewComments}}
+                            </span>
                         </td>
                         <td class="time">{{.UpdatedAt.Format "Jan 2, 2006"}}</td>
                         <td class="time">{{.CreatedAt.Format "Jan 2, 2006"}}</td>
@@ -160,10 +220,8 @@
         const link = document.querySelector('link[rel="stylesheet"]');
         link.href = `/static/${newCSS}`;
         
-        // Store preference
         localStorage.setItem('preferredCSS', newCSS);
         
-        // Update URL parameter
         const url = new URL(window.location);
         url.searchParams.set('css', newCSS);
         window.history.replaceState({}, '', url);
@@ -192,11 +250,9 @@
             setRefresh(interval);
         });
 
-        // Set initial interval if saved
         setRefresh(parseInt(dropdown.value, 10));
     })();
     
-    // Load preferred style on page load
     window.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const cssParam = urlParams.get('css');

@@ -27,9 +27,11 @@ func New(cfg *config.Config, gh *github.Client, storage *storage.Memory) *Fetche
 func (f *Fetcher) Start(ctx context.Context) {
     // Initial fetch
     f.fetchIssues(ctx)
+    f.fetchPullRequests(ctx)
 
     // Start periodic fetches
     go f.runIssuesFetcher(ctx)
+    go f.runPRsFetcher(ctx)
 }
 
 func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
@@ -57,4 +59,31 @@ func (f *Fetcher) fetchIssues(ctx context.Context) {
 
     f.storage.SetIssues(issues)
     log.Printf("Fetched %d issues", len(issues))
+}
+
+func (f *Fetcher) runPRsFetcher(ctx context.Context) {
+    ticker := time.NewTicker(f.cfg.FetchIntervals.PullRequests)
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-ticker.C:
+            f.fetchPullRequests(ctx)
+        case <-ctx.Done():
+            return
+        }
+    }
+}
+
+func (f *Fetcher) fetchPullRequests(ctx context.Context) {
+    log.Printf("Fetching pull requests for %s", f.cfg.GitHub.Organization)
+    
+    prs, err := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+    if err != nil {
+        log.Printf("Error fetching pull requests: %v", err)
+        return
+    }
+
+    f.storage.SetPullRequests(prs)
+    log.Printf("Fetched %d pull requests", len(prs))
 }
