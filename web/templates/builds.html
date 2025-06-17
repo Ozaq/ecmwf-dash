@@ -4,7 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECMWF GitHub Dashboard - Build Status</title>
-    <link rel="stylesheet" href="static/{{.CSSFile}}">
+    <script>
+        // Set CSS before page renders to prevent flicker
+        (function() {
+            let savedCSS = localStorage.getItem('preferredCSS');
+            if (!savedCSS) {
+                savedCSS = 'default.css';
+                localStorage.setItem('preferredCSS', savedCSS);
+            }
+            document.write('<link rel="stylesheet" href="static/' + savedCSS + '">');
+        })();
+    </script>
     <style>
         .build-cards {
             display: grid;
@@ -252,6 +262,23 @@
                         </a>
                         {{end}}
                     </div>
+                    <div class="checks-summary">
+                        {{$successCount := 0}}
+                        {{$failureCount := 0}}
+                        {{$runningCount := 0}}
+                        {{range .MainBranch.Checks}}
+                            {{if eq .Status "in_progress"}}
+                                {{$runningCount = add $runningCount 1}}
+                            {{else if eq .Conclusion "success"}}
+                                {{$successCount = add $successCount 1}}
+                            {{else if eq .Conclusion "failure"}}
+                                {{$failureCount = add $failureCount 1}}
+                            {{end}}
+                        {{end}}
+                        {{if gt $successCount 0}}<span class="check-count success">{{$successCount}} ✓</span>{{end}}
+                        {{if gt $failureCount 0}}<span class="check-count failure">{{$failureCount}} ✗</span>{{end}}
+                        {{if gt $runningCount 0}}<span class="check-count running">{{$runningCount}} ⏳</span>{{end}}
+                    </div>
                     {{else}}
                     <div class="no-runs">No recent checks</div>
                     {{end}}
@@ -290,6 +317,23 @@
                         </a>
                         {{end}}
                     </div>
+                    <div class="checks-summary">
+                        {{$successCount := 0}}
+                        {{$failureCount := 0}}
+                        {{$runningCount := 0}}
+                        {{range .DevelopBranch.Checks}}
+                            {{if eq .Status "in_progress"}}
+                                {{$runningCount = add $runningCount 1}}
+                            {{else if eq .Conclusion "success"}}
+                                {{$successCount = add $successCount 1}}
+                            {{else if eq .Conclusion "failure"}}
+                                {{$failureCount = add $failureCount 1}}
+                            {{end}}
+                        {{end}}
+                        {{if gt $successCount 0}}<span class="check-count success">{{$successCount}} ✓</span>{{end}}
+                        {{if gt $failureCount 0}}<span class="check-count failure">{{$failureCount}} ✗</span>{{end}}
+                        {{if gt $runningCount 0}}<span class="check-count running">{{$runningCount}} ⏳</span>{{end}}
+                    </div>
                     {{else}}
                     <div class="no-runs">No recent checks</div>
                     {{end}}
@@ -299,71 +343,6 @@
         </div>
     </div>
     
-    <script>
-    function changeStyle(select) {
-        const newCSS = select.value;
-        const link = document.querySelector('link[rel="stylesheet"]');
-        link.href = `static/${newCSS}`;
-        
-        // Apply theme class to body for CSS variable overrides
-        document.body.className = '';
-        if (newCSS.includes('cyberpunk')) {
-            document.body.className = 'cyberpunk-theme';
-        } else if (newCSS.includes('retro')) {
-            document.body.className = 'retro-theme';
-        }
-        
-        localStorage.setItem('preferredCSS', newCSS);
-        
-        const url = new URL(window.location);
-        url.searchParams.set('css', newCSS);
-        window.history.replaceState({}, '', url);
-    }
-
-    // Refresh functionality
-    (function() {
-        const dropdown = document.getElementById("refresh-select");
-        const saved = localStorage.getItem("refresh-interval");
-        if (saved) dropdown.value = saved;
-
-        let timer = null;
-
-        function setRefresh(interval) {
-            if (timer) clearInterval(timer);
-            if (interval > 0) {
-                timer = setInterval(() => {
-                    window.location.reload();
-                }, interval);
-            }
-        }
-
-        dropdown.addEventListener("change", () => {
-            const interval = parseInt(dropdown.value, 10);
-            localStorage.setItem("refresh-interval", dropdown.value);
-            setRefresh(interval);
-        });
-
-        setRefresh(parseInt(dropdown.value, 10));
-    })();
-    
-    // Load preferred style on page load
-    window.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const cssParam = urlParams.get('css');
-        const savedCSS = localStorage.getItem('preferredCSS');
-        
-        if (cssParam) {
-            const select = document.getElementById('style-select');
-            select.value = cssParam;
-            changeStyle(select);
-        } else if (savedCSS) {
-            const select = document.getElementById('style-select');
-            if (Array.from(select.options).some(opt => opt.value === savedCSS)) {
-                select.value = savedCSS;
-                changeStyle(select);
-            }
-        }
-    });
-    </script>
+    <script src="static/dashboard.js"></script>
 </body>
 </html>

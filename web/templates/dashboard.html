@@ -4,7 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECMWF GitHub Dashboard</title>
-    <link rel="stylesheet" href="static/{{.CSSFile}}">
+    <script>
+        // Set CSS before page renders to prevent flicker
+        (function() {
+            let savedCSS = localStorage.getItem('preferredCSS');
+            if (!savedCSS) {
+                savedCSS = 'default.css';
+                localStorage.setItem('preferredCSS', savedCSS);
+            }
+            document.write('<link rel="stylesheet" href="static/' + savedCSS + '">');
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -101,9 +111,9 @@
                 <tbody>
                     {{range .Issues}}
                     <tr>
-                        <td>{{.Repository}}</td>
-                        <td class="issue-number">#{{.Number}}</td>
-                        <td>
+                        <td data-label="Repository">{{.Repository}}</td>
+                        <td data-label="#" class="issue-number">#{{.Number}}</td>
+                        <td data-label="Title">
                             <div>
                                 <a href="{{.URL}}" target="_blank">{{.Title}}</a>
                             </div>
@@ -115,7 +125,7 @@
                             </div>
                             {{end}}
                         </td>
-                        <td>
+                        <td data-label="Author">
                             <div class="author-info">
                                 <img src="{{.AuthorAvatar}}" alt="{{.Author}}" class="author-avatar">
                                 <a href="https://github.com/{{.Author}}" target="_blank">{{.Author}}</a>
@@ -124,8 +134,8 @@
                                 {{end}}
                             </div>
                         </td>
-                        <td class="time">{{.UpdatedAt.Format "Jan 2, 2006"}}</td>
-                        <td class="time">{{.CreatedAt.Format "Jan 2, 2006"}}</td>
+                        <td data-label="Updated" class="time">{{.UpdatedAt.Format "Jan 2, 2006"}}</td>
+                        <td data-label="Created" class="time">{{.CreatedAt.Format "Jan 2, 2006"}}</td>
                     </tr>
                     {{end}}
                 </tbody>
@@ -155,66 +165,8 @@
         {{end}}
     </div>
     
-    <script>
-    function changeStyle(select) {
-        const newCSS = select.value;
-        const link = document.querySelector('link[rel="stylesheet"]');
-        link.href = `static/${newCSS}`;
-        
-        // Store preference
-        localStorage.setItem('preferredCSS', newCSS);
-        
-        // Update URL parameter
-        const url = new URL(window.location);
-        url.searchParams.set('css', newCSS);
-        window.history.replaceState({}, '', url);
-    }
-
-    // Refresh functionality
-    (function() {
-        const dropdown = document.getElementById("refresh-select");
-        const saved = localStorage.getItem("refresh-interval");
-        if (saved) dropdown.value = saved;
-
-        let timer = null;
-
-        function setRefresh(interval) {
-            if (timer) clearInterval(timer);
-            if (interval > 0) {
-                timer = setInterval(() => {
-                    window.location.reload();
-                }, interval);
-            }
-        }
-
-        dropdown.addEventListener("change", () => {
-            const interval = parseInt(dropdown.value, 10);
-            localStorage.setItem("refresh-interval", dropdown.value);
-            setRefresh(interval);
-        });
-
-        // Set initial interval if saved
-        setRefresh(parseInt(dropdown.value, 10));
-    })();
-    
-    // Load preferred style on page load
-    window.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const cssParam = urlParams.get('css');
-        const savedCSS = localStorage.getItem('preferredCSS');
-        
-        if (cssParam) {
-            const select = document.getElementById('style-select');
-            select.value = cssParam;
-            changeStyle(select);
-        } else if (savedCSS) {
-            const select = document.getElementById('style-select');
-            if (Array.from(select.options).some(opt => opt.value === savedCSS)) {
-                select.value = savedCSS;
-                changeStyle(select);
-            }
-        }
-    });
-    </script>
+    <script src="static/dashboard.js"></script>
+</body>
+</html>
 </body>
 </html>
