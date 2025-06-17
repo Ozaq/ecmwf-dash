@@ -18,6 +18,9 @@ type Memory struct {
     
     workflowRuns []github.WorkflowRun
     workflowTime time.Time
+    
+    branchChecks []github.BranchCheck
+    branchChecksTime time.Time
 }
 
 func New() *Memory {
@@ -61,4 +64,17 @@ func (m *Memory) GetWorkflowRuns() ([]github.WorkflowRun, time.Time) {
     m.mu.RLock()
     defer m.mu.RUnlock()
     return m.workflowRuns, m.workflowTime
+}
+
+func (m *Memory) SetBranchChecks(checks []github.BranchCheck) {
+    m.mu.Lock()
+    defer m.mu.Unlock()
+    m.branchChecks = checks
+    m.branchChecksTime = time.Now()
+}
+
+func (m *Memory) GetBranchChecks() ([]github.BranchCheck, time.Time) {
+    m.mu.RLock()
+    defer m.mu.RUnlock()
+    return m.branchChecks, m.branchChecksTime
 }

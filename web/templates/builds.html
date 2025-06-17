@@ -178,9 +178,9 @@
         <div class="header">
             <h1>ECMWF GitHub Dashboard - Build Status</h1>
             <nav class="nav-links">
-                <a href="issues">Issues</a>
-                <a href="pulls">Pull Requests</a>
                 <a href="builds" class="active">Build Status</a>
+                <a href="pulls">Pull Requests</a>
+                <a href="issues">Issues</a>
             </nav>
             <div class="header-info">
                 <div class="stats">
@@ -214,32 +214,46 @@
             {{range .Repositories}}
             <div class="build-card">
                 <div class="card-header">
-                    <h3 class="repo-name">{{.Name}}</h3>
+                    <h3 class="repo-name">
+                        <a href="https://github.com/ecmwf/{{.Name}}" target="_blank">{{.Name}}</a>
+                    </h3>
                 </div>
                 
                 <!-- Main/Master Branch -->
                 <div class="branch-section">
                     <div class="branch-header">
                         <span class="branch-name">{{.MainBranch.Branch}}</span>
-                        {{if .MainBranch.LatestRun}}
+                        {{if .MainBranch.HasChecks}}
                         <div class="latest-status">
-                            <span class="status-icon {{if eq .MainBranch.LatestRun.Conclusion "success"}}status-success{{else if eq .MainBranch.LatestRun.Conclusion "failure"}}status-failure{{else if eq .MainBranch.LatestRun.Status "in_progress"}}status-running{{else}}status-neutral{{end}}"></span>
-                            <span>{{if eq .MainBranch.LatestRun.Status "in_progress"}}Running{{else}}{{.MainBranch.LatestRun.Conclusion}}{{end}}</span>
+                            {{$successCount := 0}}
+                            {{$failureCount := 0}}
+                            {{$runningCount := 0}}
+                            {{range .MainBranch.Checks}}
+                                {{if eq .Status "in_progress"}}
+                                    {{$runningCount = add $runningCount 1}}
+                                {{else if eq .Conclusion "success"}}
+                                    {{$successCount = add $successCount 1}}
+                                {{else if eq .Conclusion "failure"}}
+                                    {{$failureCount = add $failureCount 1}}
+                                {{end}}
+                            {{end}}
+                            <span class="status-icon {{if gt $runningCount 0}}status-running{{else if gt $failureCount 0}}status-failure{{else if gt $successCount 0}}status-success{{else}}status-neutral{{end}}"></span>
+                            <span>{{if gt $runningCount 0}}Running{{else if gt $failureCount 0}}Failed{{else if gt $successCount 0}}Passed{{else}}Unknown{{end}}</span>
                         </div>
                         {{end}}
                     </div>
                     
-                    {{if .MainBranch.HasRuns}}
+                    {{if .MainBranch.HasChecks}}
                     <div class="runs-matrix">
-                        {{range .MainBranch.Runs}}
+                        {{range .MainBranch.Checks}}
                         <a href="{{.URL}}" target="_blank" 
-                           title="{{.WorkflowName}} - Run #{{.RunNumber}} ({{.CreatedAt.Format "Jan 2, 15:04"}}): {{if eq .Status "in_progress"}}Running{{else}}{{.Conclusion}}{{end}}"
-                           class="run-dot {{if eq .Conclusion "success"}}status-success{{else if eq .Conclusion "failure"}}status-failure{{else if eq .Status "in_progress"}}status-running{{else}}status-neutral{{end}}">
+                           title="{{.Name}}: {{if eq .Status "in_progress"}}Running{{else}}{{.Conclusion}}{{end}}"
+                           class="run-dot {{if eq .Status "in_progress"}}status-running{{else if eq .Conclusion "success"}}status-success{{else if eq .Conclusion "failure"}}status-failure{{else}}status-neutral{{end}}">
                         </a>
                         {{end}}
                     </div>
                     {{else}}
-                    <div class="no-runs">No recent builds</div>
+                    <div class="no-runs">No recent checks</div>
                     {{end}}
                 </div>
                 
@@ -247,25 +261,37 @@
                 <div class="branch-section">
                     <div class="branch-header">
                         <span class="branch-name">develop</span>
-                        {{if .DevelopBranch.LatestRun}}
+                        {{if .DevelopBranch.HasChecks}}
                         <div class="latest-status">
-                            <span class="status-icon {{if eq .DevelopBranch.LatestRun.Conclusion "success"}}status-success{{else if eq .DevelopBranch.LatestRun.Conclusion "failure"}}status-failure{{else if eq .DevelopBranch.LatestRun.Status "in_progress"}}status-running{{else}}status-neutral{{end}}"></span>
-                            <span>{{if eq .DevelopBranch.LatestRun.Status "in_progress"}}Running{{else}}{{.DevelopBranch.LatestRun.Conclusion}}{{end}}</span>
+                            {{$successCount := 0}}
+                            {{$failureCount := 0}}
+                            {{$runningCount := 0}}
+                            {{range .DevelopBranch.Checks}}
+                                {{if eq .Status "in_progress"}}
+                                    {{$runningCount = add $runningCount 1}}
+                                {{else if eq .Conclusion "success"}}
+                                    {{$successCount = add $successCount 1}}
+                                {{else if eq .Conclusion "failure"}}
+                                    {{$failureCount = add $failureCount 1}}
+                                {{end}}
+                            {{end}}
+                            <span class="status-icon {{if gt $runningCount 0}}status-running{{else if gt $failureCount 0}}status-failure{{else if gt $successCount 0}}status-success{{else}}status-neutral{{end}}"></span>
+                            <span>{{if gt $runningCount 0}}Running{{else if gt $failureCount 0}}Failed{{else if gt $successCount 0}}Passed{{else}}Unknown{{end}}</span>
                         </div>
                         {{end}}
                     </div>
                     
-                    {{if .DevelopBranch.HasRuns}}
+                    {{if .DevelopBranch.HasChecks}}
                     <div class="runs-matrix">
-                        {{range .DevelopBranch.Runs}}
+                        {{range .DevelopBranch.Checks}}
                         <a href="{{.URL}}" target="_blank" 
-                           title="{{.WorkflowName}} - Run #{{.RunNumber}} ({{.CreatedAt.Format "Jan 2, 15:04"}}): {{if eq .Status "in_progress"}}Running{{else}}{{.Conclusion}}{{end}}"
-                           class="run-dot {{if eq .Conclusion "success"}}status-success{{else if eq .Conclusion "failure"}}status-failure{{else if eq .Status "in_progress"}}status-running{{else}}status-neutral{{end}}">
+                           title="{{.Name}}: {{if eq .Status "in_progress"}}Running{{else}}{{.Conclusion}}{{end}}"
+                           class="run-dot {{if eq .Status "in_progress"}}status-running{{else if eq .Conclusion "success"}}status-success{{else if eq .Conclusion "failure"}}status-failure{{else}}status-neutral{{end}}">
                         </a>
                         {{end}}
                     </div>
                     {{else}}
-                    <div class="no-runs">No recent builds</div>
+                    <div class="no-runs">No recent checks</div>
                     {{end}}
                 </div>
             </div>

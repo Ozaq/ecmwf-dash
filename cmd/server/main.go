@@ -20,7 +20,7 @@ import (
 
 func main() {
 	// Parse CLI flags
-	cssFile := flag.String("css", "style.css", "CSS file to use (relative to web/static/)")
+	cssFile := flag.String("css", "default.css", "CSS file to use (relative to web/static/)")
 	flag.Parse()
 
 	// Load config
@@ -78,10 +78,12 @@ func main() {
 
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler.Dashboard)
-	mux.HandleFunc("/issues", handler.Dashboard)
-	mux.HandleFunc("/pulls", handler.PullRequests)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/builds", http.StatusFound)
+	})
 	mux.HandleFunc("/builds", handler.BuildStatus)
+	mux.HandleFunc("/pulls", handler.PullRequests)
+	mux.HandleFunc("/issues", handler.Dashboard)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	loggedMux := logMiddleware(mux)

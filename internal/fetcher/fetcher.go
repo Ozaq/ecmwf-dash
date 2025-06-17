@@ -27,7 +27,7 @@ func New(cfg *config.Config, gh *github.Client, storage *storage.Memory) *Fetche
 func (f *Fetcher) Start(ctx context.Context) {
     go f.runIssuesFetcher(ctx)
     go f.runPRsFetcher(ctx)
-    go f.runWorkflowsFetcher(ctx)
+    go f.runBranchChecksFetcher(ctx)
 }
 
 func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
@@ -86,30 +86,30 @@ func (f *Fetcher) fetchPullRequests(ctx context.Context) {
     log.Printf("Fetched %d pull requests", len(prs))
 }
 
-func (f *Fetcher) runWorkflowsFetcher(ctx context.Context) {
-    f.fetchWorkflows(ctx)
+func (f *Fetcher) runBranchChecksFetcher(ctx context.Context) {
+    f.fetchBranchChecks(ctx)
     ticker := time.NewTicker(f.cfg.FetchIntervals.Actions)
     defer ticker.Stop()
 
     for {
         select {
         case <-ticker.C:
-            f.fetchWorkflows(ctx)
+            f.fetchBranchChecks(ctx)
         case <-ctx.Done():
             return
         }
     }
 }
 
-func (f *Fetcher) fetchWorkflows(ctx context.Context) {
-    log.Printf("Fetching workflow runs for %s", f.cfg.GitHub.Organization)
+func (f *Fetcher) fetchBranchChecks(ctx context.Context) {
+    log.Printf("Fetching branch checks for %s", f.cfg.GitHub.Organization)
     
-    runs, err := f.gh.FetchWorkflowRuns(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+    checks, err := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
     if err != nil {
-        log.Printf("Error fetching workflow runs: %v", err)
+        log.Printf("Error fetching branch checks: %v", err)
         return
     }
 
-    f.storage.SetWorkflowRuns(runs)
-    log.Printf("Fetched %d workflow runs", len(runs))
+    f.storage.SetBranchChecks(checks)
+    log.Printf("Fetched %d branch checks", len(checks))
 }

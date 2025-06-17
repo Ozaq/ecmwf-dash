@@ -82,3 +82,12 @@ type WorkflowRun struct {
     Event        string
     TriggerActor string
 }
+
+type BranchCheck struct {
+    Repository string
+    Branch     string
+    CommitSHA  string
+    CommitURL  string
+    UpdatedAt  time.Time
+    Checks     []Check
+}

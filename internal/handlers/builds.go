@@ -10,72 +10,63 @@ import (
 )
 
 type RepositoryStatus struct {
-    Name        string
-    MainBranch  BranchStatus
+    Name          string
+    MainBranch    BranchStatus
     DevelopBranch BranchStatus
 }
 
 type BranchStatus struct {
-    Branch      string
-    Runs        []github.WorkflowRun
-    LatestRun   *github.WorkflowRun
-    HasRuns     bool
+    Branch    string
+    Checks    []github.Check
+    HasChecks bool
+    CommitSHA string
+    CommitURL string
 }
 
 func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
-    runs, lastUpdate := h.storage.GetWorkflowRuns()
-    log.Printf("Serving /builds - Workflow runs: %d", len(runs))
+    branchChecks, lastUpdate := h.storage.GetBranchChecks()
+    log.Printf("Serving /builds - Branch checks: %d", len(branchChecks))
 
     // Get available CSS files
     cssFiles := getAvailableCSS()
 
-    // Group runs by repository and branch
+    // Group checks by repository and branch
     repoMap := make(map[string]*RepositoryStatus)
     
-    for _, run := range runs {
-        if _, exists := repoMap[run.Repository]; !exists {
-            repoMap[run.Repository] = &RepositoryStatus{
-                Name: run.Repository,
+    for _, branchCheck := range branchChecks {
+        if _, exists := repoMap[branchCheck.Repository]; !exists {
+            repoMap[branchCheck.Repository] = &RepositoryStatus{
+                Name: branchCheck.Repository,
                 MainBranch: BranchStatus{
-                    Branch: getMainBranch(run.Repository, runs),
-                    Runs:   []github.WorkflowRun{},
+                    Branch: getMainBranch(branchCheck.Repository, branchChecks),
+                    Checks: []github.Check{},
                 },
                 DevelopBranch: BranchStatus{
                     Branch: "develop",
-                    Runs:   []github.WorkflowRun{},
+                    Checks: []github.Check{},
                 },
             }
         }
         
-        repo := repoMap[run.Repository]
+        repo := repoMap[branchCheck.Repository]
         
         // Determine if this is main/master or develop
-        if isMainBranch(run.Branch) {
-            repo.MainBranch.Runs = append(repo.MainBranch.Runs, run)
-            repo.MainBranch.HasRuns = true
-            if repo.MainBranch.LatestRun == nil || run.CreatedAt.After(repo.MainBranch.LatestRun.CreatedAt) {
-                repo.MainBranch.LatestRun = &run
-            }
-        } else if run.Branch == "develop" {
-            repo.DevelopBranch.Runs = append(repo.DevelopBranch.Runs, run)
-            repo.DevelopBranch.HasRuns = true
-            if repo.DevelopBranch.LatestRun == nil || run.CreatedAt.After(repo.DevelopBranch.LatestRun.CreatedAt) {
-                repo.DevelopBranch.LatestRun = &run
-            }
+        if isMainBranch(branchCheck.Branch) {
+            repo.MainBranch.Checks = branchCheck.Checks
+            repo.MainBranch.HasChecks = len(branchCheck.Checks) > 0
+            repo.MainBranch.CommitSHA = branchCheck.CommitSHA
+            repo.MainBranch.CommitURL = branchCheck.CommitURL
+        } else if branchCheck.Branch == "develop" {
+            repo.DevelopBranch.Checks = branchCheck.Checks
+            repo.DevelopBranch.HasChecks = len(branchCheck.Checks) > 0
+            repo.DevelopBranch.CommitSHA = branchCheck.CommitSHA
+            repo.DevelopBranch.CommitURL = branchCheck.CommitURL
         }
     }
 
     // Convert map to slice for template
     var repositories []*RepositoryStatus
     for _, repo := range repoMap {
-        // Sort runs by creation time (newest first)
-        sort.Slice(repo.MainBranch.Runs, func(i, j int) bool {
-            return repo.MainBranch.Runs[i].CreatedAt.After(repo.MainBranch.Runs[j].CreatedAt)
-        })
-        sort.Slice(repo.DevelopBranch.Runs, func(i, j int) bool {
-            return repo.DevelopBranch.Runs[i].CreatedAt.After(repo.DevelopBranch.Runs[j].CreatedAt)
-        })
-        
         repositories = append(repositories, repo)
     }
 
@@ -112,11 +103,11 @@ func isMainBranch(branch string) bool {
     return branch == "main" || branch == "master"
 }
 
-func getMainBranch(repo string, runs []github.WorkflowRun) string {
+func getMainBranch(repo string, checks []github.BranchCheck) string {
     // Check if repository has main or master branch
-    for _, run := range runs {
-        if run.Repository == repo && (run.Branch == "main" || run.Branch == "master") {
-            return run.Branch
+    for _, check := range checks {
+        if check.Repository == repo && (check.Branch == "main" || check.Branch == "master") {
+            return check.Branch
         }
     }
     return "main" // default
