@@ -181,18 +181,51 @@ a:hover {
 .css-selector {
     display: flex;
     align-items: center;
+    gap: 24px;
+}
+
+.css-selector > div {
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
 .css-selector label {
     color: #666;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .css-selector select {
-    padding: 4px 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 6px 12px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
     background: white;
     font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.css-selector select:hover {
+    border-color: #0969da;
+    box-shadow: 0 1px 3px rgba(9, 105, 218, 0.1);
+}
+
+.css-selector select:focus {
+    outline: none;
+    border-color: #0969da;
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+}
+
+/* Divider between dropdown groups */
+.css-selector > div:first-child::after {
+    content: "";
+    position: absolute;
+    right: -12px;
+    height: 20px;
+    width: 1px;
+    background: #d0d7de;
 }

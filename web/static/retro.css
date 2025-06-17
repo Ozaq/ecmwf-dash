@@ -250,30 +250,50 @@ body::before {
 .css-selector {
     display: flex;
     align-items: center;
+    gap: 24px;
+}
+
+.css-selector > div {
+    display: flex;
+    align-items: center;
     gap: 8px;
+    position: relative;
 }
 
 .css-selector label {
     color: #0f0;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .css-selector select {
-    padding: 4px 8px;
+    padding: 4px 10px;
     border: 1px solid #0f0;
     background: #000;
     color: #0f0;
     font-family: 'Courier New', Courier, monospace;
     font-size: 12px;
     text-transform: uppercase;
+    cursor: pointer;
+    min-width: 80px;
 }
 
 .css-selector select:hover {
     box-shadow: 0 0 5px #0f0;
+    background: #001100;
 }
 
 .css-selector select:focus {
     outline: none;
     box-shadow: 0 0 8px #0ff;
+}
+
+/* Terminal-style divider */
+.css-selector > div:first-child::after {
+    content: "|";
+    position: absolute;
+    right: -12px;
+    color: #090;
+    font-weight: bold;
 }
