@@ -1,80 +1,80 @@
 package storage
 
 import (
-    "sync"
-    "time"
+	"sync"
+	"time"
 
-    "github.com/ozaq/ecmwf-dash/internal/github"
+	"github.com/ozaq/ecmwf-dash/internal/github"
 )
 
 type Memory struct {
-    mu sync.RWMutex
+	mu sync.RWMutex
 
-    issues      []github.Issue
-    issuesTime  time.Time
-    
-    pullRequests []github.PullRequest
-    prsTime      time.Time
-    
-    workflowRuns []github.WorkflowRun
-    workflowTime time.Time
-    
-    branchChecks []github.BranchCheck
-    branchChecksTime time.Time
+	issues     []github.Issue
+	issuesTime time.Time
+
+	pullRequests []github.PullRequest
+	prsTime      time.Time
+
+	workflowRuns []github.WorkflowRun
+	workflowTime time.Time
+
+	branchChecks     []github.BranchCheck
+	branchChecksTime time.Time
 }
 
 func New() *Memory {
-    return &Memory{}
+	return &Memory{}
 }
 
 func (m *Memory) SetIssues(issues []github.Issue) {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    m.issues = issues
-    m.issuesTime = time.Now()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.issues = issues
+	m.issuesTime = time.Now()
 }
 
 func (m *Memory) GetIssues() ([]github.Issue, time.Time) {
-    m.mu.RLock()
-    defer m.mu.RUnlock()
-    return m.issues, m.issuesTime
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.issues, m.issuesTime
 }
 
 func (m *Memory) SetPullRequests(prs []github.PullRequest) {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    m.pullRequests = prs
-    m.prsTime = time.Now()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.pullRequests = prs
+	m.prsTime = time.Now()
 }
 
 func (m *Memory) GetPullRequests() ([]github.PullRequest, time.Time) {
-    m.mu.RLock()
-    defer m.mu.RUnlock()
-    return m.pullRequests, m.prsTime
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.pullRequests, m.prsTime
 }
 
 func (m *Memory) SetWorkflowRuns(runs []github.WorkflowRun) {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    m.workflowRuns = runs
-    m.workflowTime = time.Now()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.workflowRuns = runs
+	m.workflowTime = time.Now()
 }
 
 func (m *Memory) GetWorkflowRuns() ([]github.WorkflowRun, time.Time) {
-    m.mu.RLock()
-    defer m.mu.RUnlock()
-    return m.workflowRuns, m.workflowTime
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.workflowRuns, m.workflowTime
 }
 
 func (m *Memory) SetBranchChecks(checks []github.BranchCheck) {
-    m.mu.Lock()
-    defer m.mu.Unlock()
-    m.branchChecks = checks
-    m.branchChecksTime = time.Now()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.branchChecks = checks
+	m.branchChecksTime = time.Now()
 }
 
 func (m *Memory) GetBranchChecks() ([]github.BranchCheck, time.Time) {
-    m.mu.RLock()
-    defer m.mu.RUnlock()
-    return m.branchChecks, m.branchChecksTime
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.branchChecks, m.branchChecksTime
 }

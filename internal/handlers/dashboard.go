@@ -36,7 +36,7 @@ func New(storage *storage.Memory, issuesTmpl *template.Template, prsTmpl *templa
 
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	issues, lastUpdate := h.storage.GetIssues()
-    log.Printf("Serving /issues - Issues: %d", len(issues))
+	log.Printf("Serving /issues - Issues: %d", len(issues))
 
 	// Get query params
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))

@@ -1,115 +1,115 @@
 package fetcher
 
 import (
-    "context"
-    "log"
-    "time"
+	"context"
+	"log"
+	"time"
 
-    "github.com/ozaq/ecmwf-dash/internal/config"
-    "github.com/ozaq/ecmwf-dash/internal/github"
-    "github.com/ozaq/ecmwf-dash/internal/storage"
+	"github.com/ozaq/ecmwf-dash/internal/config"
+	"github.com/ozaq/ecmwf-dash/internal/github"
+	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
 type Fetcher struct {
-    cfg     *config.Config
-    gh      *github.Client
-    storage *storage.Memory
+	cfg     *config.Config
+	gh      *github.Client
+	storage *storage.Memory
 }
 
 func New(cfg *config.Config, gh *github.Client, storage *storage.Memory) *Fetcher {
-    return &Fetcher{
-        cfg:     cfg,
-        gh:      gh,
-        storage: storage,
-    }
+	return &Fetcher{
+		cfg:     cfg,
+		gh:      gh,
+		storage: storage,
+	}
 }
 
 func (f *Fetcher) Start(ctx context.Context) {
-    go f.runIssuesFetcher(ctx)
-    go f.runPRsFetcher(ctx)
-    go f.runBranchChecksFetcher(ctx)
+	go f.runIssuesFetcher(ctx)
+	go f.runPRsFetcher(ctx)
+	go f.runBranchChecksFetcher(ctx)
 }
 
 func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
-    f.fetchIssues(ctx)
-    ticker := time.NewTicker(f.cfg.FetchIntervals.Issues)
-    defer ticker.Stop()
+	f.fetchIssues(ctx)
+	ticker := time.NewTicker(f.cfg.FetchIntervals.Issues)
+	defer ticker.Stop()
 
-    for {
-        select {
-        case <-ticker.C:
-            f.fetchIssues(ctx)
-        case <-ctx.Done():
-            return
-        }
-    }
+	for {
+		select {
+		case <-ticker.C:
+			f.fetchIssues(ctx)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (f *Fetcher) fetchIssues(ctx context.Context) {
-    log.Printf("Fetching issues for %s", f.cfg.GitHub.Organization)
-    
-    issues, err := f.gh.FetchIssues(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
-    if err != nil {
-        log.Printf("Error fetching issues: %v", err)
-        return
-    }
+	log.Printf("Fetching issues for %s", f.cfg.GitHub.Organization)
 
-    f.storage.SetIssues(issues)
-    log.Printf("Fetched %d issues", len(issues))
+	issues, err := f.gh.FetchIssues(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	if err != nil {
+		log.Printf("Error fetching issues: %v", err)
+		return
+	}
+
+	f.storage.SetIssues(issues)
+	log.Printf("Fetched %d issues", len(issues))
 }
 
 func (f *Fetcher) runPRsFetcher(ctx context.Context) {
-    f.fetchPullRequests(ctx)
-    ticker := time.NewTicker(f.cfg.FetchIntervals.PullRequests)
-    defer ticker.Stop()
+	f.fetchPullRequests(ctx)
+	ticker := time.NewTicker(f.cfg.FetchIntervals.PullRequests)
+	defer ticker.Stop()
 
-    for {
-        select {
-        case <-ticker.C:
-            f.fetchPullRequests(ctx)
-        case <-ctx.Done():
-            return
-        }
-    }
+	for {
+		select {
+		case <-ticker.C:
+			f.fetchPullRequests(ctx)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (f *Fetcher) fetchPullRequests(ctx context.Context) {
-    log.Printf("Fetching pull requests for %s", f.cfg.GitHub.Organization)
-    
-    prs, err := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
-    if err != nil {
-        log.Printf("Error fetching pull requests: %v", err)
-        return
-    }
+	log.Printf("Fetching pull requests for %s", f.cfg.GitHub.Organization)
 
-    f.storage.SetPullRequests(prs)
-    log.Printf("Fetched %d pull requests", len(prs))
+	prs, err := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	if err != nil {
+		log.Printf("Error fetching pull requests: %v", err)
+		return
+	}
+
+	f.storage.SetPullRequests(prs)
+	log.Printf("Fetched %d pull requests", len(prs))
 }
 
 func (f *Fetcher) runBranchChecksFetcher(ctx context.Context) {
-    f.fetchBranchChecks(ctx)
-    ticker := time.NewTicker(f.cfg.FetchIntervals.Actions)
-    defer ticker.Stop()
+	f.fetchBranchChecks(ctx)
+	ticker := time.NewTicker(f.cfg.FetchIntervals.Actions)
+	defer ticker.Stop()
 
-    for {
-        select {
-        case <-ticker.C:
-            f.fetchBranchChecks(ctx)
-        case <-ctx.Done():
-            return
-        }
-    }
+	for {
+		select {
+		case <-ticker.C:
+			f.fetchBranchChecks(ctx)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (f *Fetcher) fetchBranchChecks(ctx context.Context) {
-    log.Printf("Fetching branch checks for %s", f.cfg.GitHub.Organization)
-    
-    checks, err := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
-    if err != nil {
-        log.Printf("Error fetching branch checks: %v", err)
-        return
-    }
+	log.Printf("Fetching branch checks for %s", f.cfg.GitHub.Organization)
 
-    f.storage.SetBranchChecks(checks)
-    log.Printf("Fetched %d branch checks", len(checks))
+	checks, err := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	if err != nil {
+		log.Printf("Error fetching branch checks: %v", err)
+		return
+	}
+
+	f.storage.SetBranchChecks(checks)
+	log.Printf("Fetched %d branch checks", len(checks))
 }

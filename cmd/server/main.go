@@ -78,9 +78,7 @@ func main() {
 
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "builds", http.StatusFound)
-	})
+	mux.HandleFunc("/", handler.BuildStatus)
 	mux.HandleFunc("/builds", handler.BuildStatus)
 	mux.HandleFunc("/pulls", handler.PullRequests)
 	mux.HandleFunc("/issues", handler.Dashboard)
