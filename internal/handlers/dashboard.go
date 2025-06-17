@@ -17,24 +17,26 @@ import (
 const issuesPerPage = 100
 
 type Handler struct {
-	storage    *storage.Memory
-	template   *template.Template
-	prTemplate *template.Template
-	cssFile    string
+	storage       *storage.Memory
+	template      *template.Template
+	prTemplate    *template.Template
+	buildTemplate *template.Template
+	cssFile       string
 }
 
-func New(storage *storage.Memory, issuesTmpl *template.Template, prsTmpl *template.Template, cssFile string) *Handler {
+func New(storage *storage.Memory, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, cssFile string) *Handler {
 	return &Handler{
-		storage:    storage,
-		template:   issuesTmpl,
-		prTemplate: prsTmpl,
-		cssFile:    cssFile,
+		storage:       storage,
+		template:      issuesTmpl,
+		prTemplate:    prsTmpl,
+		buildTemplate: buildTmpl,
+		cssFile:       cssFile,
 	}
 }
 
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	issues, lastUpdate := h.storage.GetIssues()
-    log.Printf("Serving /issues - Sssues: %d", len(issues))
+    log.Printf("Serving /issues - Issues: %d", len(issues))
 
 	// Get query params
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))

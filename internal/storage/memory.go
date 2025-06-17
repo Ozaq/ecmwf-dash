@@ -15,6 +15,9 @@ type Memory struct {
     
     pullRequests []github.PullRequest
     prsTime      time.Time
+    
+    workflowRuns []github.WorkflowRun
+    workflowTime time.Time
 }
 
 func New() *Memory {
@@ -45,4 +48,17 @@ func (m *Memory) GetPullRequests() ([]github.PullRequest, time.Time) {
     m.mu.RLock()
     defer m.mu.RUnlock()
     return m.pullRequests, m.prsTime
+}
+
+func (m *Memory) SetWorkflowRuns(runs []github.WorkflowRun) {
+    m.mu.Lock()
+    defer m.mu.Unlock()
+    m.workflowRuns = runs
+    m.workflowTime = time.Now()
+}
+
+func (m *Memory) GetWorkflowRuns() ([]github.WorkflowRun, time.Time) {
+    m.mu.RLock()
+    defer m.mu.RUnlock()
+    return m.workflowRuns, m.workflowTime
 }

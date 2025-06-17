@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECMWF GitHub Dashboard - Build Status</title>
+    <link rel="stylesheet" href="static/{{.CSSFile}}">
+    <style>
+        .build-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .build-card {
+            background: var(--card-bg, white);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: var(--card-border, 1px solid #e9ecef);
+        }
+        
+        .card-header {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: var(--divider, 1px solid #e9ecef);
+        }
+        
+        .repo-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--primary-text, #24292f);
+        }
+        
+        .branch-section {
+            margin-bottom: 16px;
+        }
+        
+        .branch-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .branch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .branch-name {
+            font-weight: 500;
+            color: var(--secondary-text, #666);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .latest-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .status-success { background: var(--success-color, #1a7f37); }
+        .status-failure { background: var(--error-color, #d1242f); }
+        .status-running { background: var(--warning-color, #fb8500); }
+        .status-neutral { background: var(--neutral-color, #6e7781); }
+        
+        .runs-matrix {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            margin-top: 8px;
+        }
+        
+        .run-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: block;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+        
+        .run-dot:hover {
+            transform: scale(1.3);
+        }
+        
+        .run-dot:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 125%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 1;
+            z-index: 9999;
+            transition: opacity 0.2s;
+        }
+        
+        .run-dot:hover::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 115%;
+            border-width: 4px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+            z-index: 9999;
+        }
+        
+        .no-runs {
+            color: var(--muted-text, #999);
+            font-style: italic;
+            font-size: 14px;
+            padding: 8px 0;
+        }
+        
+        /* Theme-specific overrides */
+        .cyberpunk-theme {
+            --card-bg: #1a1a1a;
+            --card-border: 1px solid #333;
+            --primary-text: #00ffe7;
+            --secondary-text: #ff00c8;
+            --divider: 1px solid #333;
+            --success-color: #00ffe7;
+            --error-color: #ff0033;
+            --warning-color: #ffcc00;
+            --neutral-color: #666;
+            --muted-text: #888;
+        }
+        
+        .retro-theme {
+            --card-bg: #000;
+            --card-border: 2px solid #0f0;
+            --primary-text: #0f0;
+            --secondary-text: #090;
+            --divider: 1px solid #030;
+            --success-color: #0f0;
+            --error-color: #f00;
+            --warning-color: #ff0;
+            --neutral-color: #666;
+            --muted-text: #090;
+        }
+        
+        /* Grid responsiveness */
+        @media (max-width: 768px) {
+            .build-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .build-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ECMWF GitHub Dashboard - Build Status</h1>
+            <nav class="nav-links">
+                <a href="issues">Issues</a>
+                <a href="pulls">Pull Requests</a>
+                <a href="builds" class="active">Build Status</a>
+            </nav>
+            <div class="header-info">
+                <div class="stats">
+                    Last updated: {{.LastUpdate.Format "Jan 2, 15:04:05 MST"}} | 
+                    Repositories: {{len .Repositories}}
+                </div>
+                <div class="css-selector">
+                    <div style="position: relative;">
+                        <label for="refresh-select">Refresh</label>
+                        <select id="refresh-select">
+                            <option value="0">Off</option>
+                            <option value="60000">1 min</option>
+                            <option value="300000">5 min</option>
+                            <option value="600000">10 min</option>
+                            <option value="900000">15 min</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="style-select">Theme</label>
+                        <select id="style-select" onchange="changeStyle(this)">
+                            {{range .CSSFiles}}
+                            <option value="{{.}}" {{if eq . $.CSSFile}}selected{{end}}>{{.}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="build-cards">
+            {{range .Repositories}}
+            <div class="build-card">
+                <div class="card-header">
+                    <h3 class="repo-name">{{.Name}}</h3>
+                </div>
+                
+                <!-- Main/Master Branch -->
+                <div class="branch-section">
+                    <div class="branch-header">
+                        <span class="branch-name">{{.MainBranch.Branch}}</span>
+                        {{if .MainBranch.LatestRun}}
+                        <div class="latest-status">
+                            <span class="status-icon {{if eq .MainBranch.LatestRun.Conclusion "success"}}status-success{{else if eq .MainBranch.LatestRun.Conclusion "failure"}}status-failure{{else if eq .MainBranch.LatestRun.Status "in_progress"}}status-running{{else}}status-neutral{{end}}"></span>
+                            <span>{{if eq .MainBranch.LatestRun.Status "in_progress"}}Running{{else}}{{.MainBranch.LatestRun.Conclusion}}{{end}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+                    
+                    {{if .MainBranch.HasRuns}}
+                    <div class="runs-matrix">
+                        {{range .MainBranch.Runs}}
+                        <a href="{{.URL}}" target="_blank" 
+                           title="{{.WorkflowName}} - Run #{{.RunNumber}} ({{.CreatedAt.Format "Jan 2, 15:04"}}): {{if eq .Status "in_progress"}}Running{{else}}{{.Conclusion}}{{end}}"
+                           class="run-dot {{if eq .Conclusion "success"}}status-success{{else if eq .Conclusion "failure"}}status-failure{{else if eq .Status "in_progress"}}status-running{{else}}status-neutral{{end}}">
+                        </a>
+                        {{end}}
+                    </div>
+                    {{else}}
+                    <div class="no-runs">No recent builds</div>
+                    {{end}}
+                </div>
+                
+                <!-- Develop Branch -->
+                <div class="branch-section">
+                    <div class="branch-header">
+                        <span class="branch-name">develop</span>
+                        {{if .DevelopBranch.LatestRun}}
+                        <div class="latest-status">
+                            <span class="status-icon {{if eq .DevelopBranch.LatestRun.Conclusion "success"}}status-success{{else if eq .DevelopBranch.LatestRun.Conclusion "failure"}}status-failure{{else if eq .DevelopBranch.LatestRun.Status "in_progress"}}status-running{{else}}status-neutral{{end}}"></span>
+                            <span>{{if eq .DevelopBranch.LatestRun.Status "in_progress"}}Running{{else}}{{.DevelopBranch.LatestRun.Conclusion}}{{end}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+                    
+                    {{if .DevelopBranch.HasRuns}}
+                    <div class="runs-matrix">
+                        {{range .DevelopBranch.Runs}}
+                        <a href="{{.URL}}" target="_blank" 
+                           title="{{.WorkflowName}} - Run #{{.RunNumber}} ({{.CreatedAt.Format "Jan 2, 15:04"}}): {{if eq .Status "in_progress"}}Running{{else}}{{.Conclusion}}{{end}}"
+                           class="run-dot {{if eq .Conclusion "success"}}status-success{{else if eq .Conclusion "failure"}}status-failure{{else if eq .Status "in_progress"}}status-running{{else}}status-neutral{{end}}">
+                        </a>
+                        {{end}}
+                    </div>
+                    {{else}}
+                    <div class="no-runs">No recent builds</div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+    
+    <script>
+    function changeStyle(select) {
+        const newCSS = select.value;
+        const link = document.querySelector('link[rel="stylesheet"]');
+        link.href = `static/${newCSS}`;
+        
+        // Apply theme class to body for CSS variable overrides
+        document.body.className = '';
+        if (newCSS.includes('cyberpunk')) {
+            document.body.className = 'cyberpunk-theme';
+        } else if (newCSS.includes('retro')) {
+            document.body.className = 'retro-theme';
+        }
+        
+        localStorage.setItem('preferredCSS', newCSS);
+        
+        const url = new URL(window.location);
+        url.searchParams.set('css', newCSS);
+        window.history.replaceState({}, '', url);
+    }
+
+    // Refresh functionality
+    (function() {
+        const dropdown = document.getElementById("refresh-select");
+        const saved = localStorage.getItem("refresh-interval");
+        if (saved) dropdown.value = saved;
+
+        let timer = null;
+
+        function setRefresh(interval) {
+            if (timer) clearInterval(timer);
+            if (interval > 0) {
+                timer = setInterval(() => {
+                    window.location.reload();
+                }, interval);
+            }
+        }
+
+        dropdown.addEventListener("change", () => {
+            const interval = parseInt(dropdown.value, 10);
+            localStorage.setItem("refresh-interval", dropdown.value);
+            setRefresh(interval);
+        });
+
+        setRefresh(parseInt(dropdown.value, 10));
+    })();
+    
+    // Load preferred style on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cssParam = urlParams.get('css');
+        const savedCSS = localStorage.getItem('preferredCSS');
+        
+        if (cssParam) {
+            const select = document.getElementById('style-select');
+            select.value = cssParam;
+            changeStyle(select);
+        } else if (savedCSS) {
+            const select = document.getElementById('style-select');
+            if (Array.from(select.options).some(opt => opt.value === savedCSS)) {
+                select.value = savedCSS;
+                changeStyle(select);
+            }
+        }
+    });
+    </script>
+</body>
+</html>

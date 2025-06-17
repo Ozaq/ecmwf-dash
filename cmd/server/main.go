@@ -45,35 +45,43 @@ func main() {
 	f := fetcher.New(cfg, gh, store)
 	f.Start(ctx)
 
-	// Load template
+	// Load templates
 	issuesTmpl := template.New("dashboard.html").Funcs(template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"mul": func(a, b int) int { return a * b },
 	})
 	issuesTmpl, err = issuesTmpl.ParseFiles("web/templates/dashboard.html")
 	if err != nil {
-		log.Fatal("Failed to load template:", err)
+		log.Fatal("Failed to load dashboard template:", err)
 	}
 
-	// Load template
 	prsTmpl := template.New("pullrequests.html").Funcs(template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"mul": func(a, b int) int { return a * b },
 	})
 	prsTmpl, err = prsTmpl.ParseFiles("web/templates/pullrequests.html")
 	if err != nil {
-		log.Fatal("Failed to load template:", err)
+		log.Fatal("Failed to load pull requests template:", err)
 	}
 
+	buildsTmpl := template.New("builds.html").Funcs(template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+		"mul": func(a, b int) int { return a * b },
+	})
+	buildsTmpl, err = buildsTmpl.ParseFiles("web/templates/builds.html")
+	if err != nil {
+		log.Fatal("Failed to load builds template:", err)
+	}
 
 	// Create handler
-	handler := handlers.New(store, issuesTmpl, prsTmpl, *cssFile)
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, *cssFile)
 
 	// Setup routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handler.Dashboard)
 	mux.HandleFunc("/issues", handler.Dashboard)
 	mux.HandleFunc("/pulls", handler.PullRequests)
+	mux.HandleFunc("/builds", handler.BuildStatus)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	loggedMux := logMiddleware(mux)

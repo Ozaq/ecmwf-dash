@@ -27,6 +27,7 @@ func New(cfg *config.Config, gh *github.Client, storage *storage.Memory) *Fetche
 func (f *Fetcher) Start(ctx context.Context) {
     go f.runIssuesFetcher(ctx)
     go f.runPRsFetcher(ctx)
+    go f.runWorkflowsFetcher(ctx)
 }
 
 func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
@@ -83,4 +84,32 @@ func (f *Fetcher) fetchPullRequests(ctx context.Context) {
 
     f.storage.SetPullRequests(prs)
     log.Printf("Fetched %d pull requests", len(prs))
+}
+
+func (f *Fetcher) runWorkflowsFetcher(ctx context.Context) {
+    f.fetchWorkflows(ctx)
+    ticker := time.NewTicker(f.cfg.FetchIntervals.Actions)
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-ticker.C:
+            f.fetchWorkflows(ctx)
+        case <-ctx.Done():
+            return
+        }
+    }
+}
+
+func (f *Fetcher) fetchWorkflows(ctx context.Context) {
+    log.Printf("Fetching workflow runs for %s", f.cfg.GitHub.Organization)
+    
+    runs, err := f.gh.FetchWorkflowRuns(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+    if err != nil {
+        log.Printf("Error fetching workflow runs: %v", err)
+        return
+    }
+
+    f.storage.SetWorkflowRuns(runs)
+    log.Printf("Fetched %d workflow runs", len(runs))
 }

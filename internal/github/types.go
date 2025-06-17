@@ -64,3 +64,21 @@ type Check struct {
     Conclusion string // success, failure, neutral, cancelled, skipped, timed_out
     URL        string
 }
+
+type WorkflowRun struct {
+    Repository   string
+    Branch       string
+    WorkflowName string
+    WorkflowID   int64
+    RunID        int64
+    RunNumber    int
+    Status       string // completed, in_progress, queued
+    Conclusion   string // success, failure, neutral, cancelled, skipped, timed_out
+    CreatedAt    time.Time
+    UpdatedAt    time.Time
+    URL          string
+    HeadBranch   string
+    HeadSHA      string
+    Event        string
+    TriggerActor string
+}
