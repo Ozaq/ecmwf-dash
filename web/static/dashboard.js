@@ -12,7 +12,7 @@ function changeStyle(select) {
     
     // Set default CSS on first visit
     if (!savedCSS) {
-        savedCSS = 'default.css';
+        savedCSS = 'auto.css';
         localStorage.setItem('preferredCSS', savedCSS);
     }
     
@@ -68,8 +68,13 @@ window.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Set the dropdown to match current CSS
+        // Set the dropdown to match current CSS (including default for first-time users)
         const currentCSS = localStorage.getItem('preferredCSS') || 'auto.css';
         select.value = currentCSS;
+        
+        // Ensure the CSS is set correctly if this is the first visit
+        if (!localStorage.getItem('preferredCSS')) {
+            localStorage.setItem('preferredCSS', 'auto.css');
+        }
     }
 });
