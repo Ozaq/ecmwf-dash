@@ -1,9 +1,8 @@
 name: Build and Push to eccr
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [published]
 
 jobs:
   build-and-push:
@@ -28,5 +27,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:latest
-
+          tags: |
+            ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:latest
+            ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:${{ github.event.release.tag_name }}
