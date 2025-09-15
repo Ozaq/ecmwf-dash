@@ -1,19 +1,30 @@
 github:
   organization: ecmwf
   repositories:
-    - fdb
-    - eckit
-    - metkit
-    - fckit
-    - dhskit
-    - multio
-    - eccodes
-    - eccodes-python
-    - gribjump
-    - mars-server
-    - mars-client-cpp
-    - odc
-    - codex
+    - name: fdb
+      branches: [master, develop]
+    - name: eckit
+      branches: [master, develop]
+    - name: metkit
+      branches: [master, develop]
+    - name: fckit
+      branches: [master, develop]
+    - name: dhskit
+      branches: [master, develop]
+    - name: multio
+      branches: [master, develop]
+    - name: eccodes
+      branches: [master, develop]
+    - name: eccodes-python
+      branches: [master, develop]
+    - name: gribjump
+      branches: [master, develop]
+    - name: mars-server
+      branches: [master, develop]
+    - name: mars-client-cpp
+      branches: [master, develop]
+    - name: odc
+      branches: [master, develop]
 
 fetch_intervals:
   issues: 30m

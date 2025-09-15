@@ -15,8 +15,13 @@ type Config struct {
 }
 
 type GitHubConfig struct {
-	Organization string   `yaml:"organization"`
-	Repositories []string `yaml:"repositories"`
+	Organization string             `yaml:"organization"`
+	Repositories []RepositoryConfig `yaml:"repositories"`
+}
+
+type RepositoryConfig struct {
+	Name     string   `yaml:"name"`
+	Branches []string `yaml:"branches"`
 }
 
 type FetchIntervalsConfig struct {

@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/google/go-github/v66/github"
+	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []string) ([]PullRequest, error) {
+func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []config.RepositoryConfig) ([]PullRequest, error) {
 	var allPRs []PullRequest
 
 	for _, repo := range repos {
@@ -20,14 +21,14 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []stri
 		}
 
 		for {
-			prs, resp, err := c.gh.PullRequests.List(ctx, org, repo, opts)
+			prs, resp, err := c.gh.PullRequests.List(ctx, org, repo.Name, opts)
 			if err != nil {
 				return nil, fmt.Errorf("fetching PRs for %s/%s: %w", org, repo, err)
 			}
 
 			for _, ghPR := range prs {
 				pr := PullRequest{
-					Repository:   repo,
+					Repository:   repo.Name,
 					Number:       ghPR.GetNumber(),
 					Title:        ghPR.GetTitle(),
 					URL:          ghPR.GetHTMLURL(),
@@ -57,7 +58,7 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []stri
 				}
 
 				// Fetch additional details
-				if err := c.fetchPRDetails(ctx, org, repo, ghPR.GetNumber(), &pr); err != nil {
+				if err := c.fetchPRDetails(ctx, org, repo.Name, ghPR.GetNumber(), &pr); err != nil {
 					// Log but continue
 					fmt.Printf("Error fetching PR details for %s/%s#%d: %v\n", org, repo, ghPR.GetNumber(), err)
 				}

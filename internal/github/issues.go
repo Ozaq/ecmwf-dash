@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v66/github"
+	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchIssues(ctx context.Context, org string, repos []string) ([]Issue, error) {
+func (c *Client) FetchIssues(ctx context.Context, org string, repos []config.RepositoryConfig) ([]Issue, error) {
 	var allIssues []Issue
 
 	for _, repo := range repos {
@@ -19,7 +20,7 @@ func (c *Client) FetchIssues(ctx context.Context, org string, repos []string) ([
 		}
 
 		for {
-			issues, resp, err := c.gh.Issues.ListByRepo(ctx, org, repo, opts)
+			issues, resp, err := c.gh.Issues.ListByRepo(ctx, org, repo.Name, opts)
 			if err != nil {
 				return nil, fmt.Errorf("fetching issues for %s/%s: %w", org, repo, err)
 			}
@@ -31,7 +32,7 @@ func (c *Client) FetchIssues(ctx context.Context, org string, repos []string) ([
 				}
 
 				issue := Issue{
-					Repository:   repo,
+					Repository:   repo.Name,
 					Number:       ghIssue.GetNumber(),
 					Title:        ghIssue.GetTitle(),
 					URL:          ghIssue.GetHTMLURL(),

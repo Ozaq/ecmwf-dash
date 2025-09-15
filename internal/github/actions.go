@@ -6,17 +6,17 @@ import (
 	"time"
 
 	"github.com/google/go-github/v66/github"
+	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []string) ([]BranchCheck, error) {
+func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []config.RepositoryConfig) ([]BranchCheck, error) {
 	var allChecks []BranchCheck
 
 	for _, repo := range repos {
-		branches := []string{"main", "master", "develop"}
 
-		for _, branch := range branches {
+		for _, branch := range repo.Branches {
 			// Get the latest commit for this branch
-			commits, _, err := c.gh.Repositories.ListCommits(ctx, org, repo, &github.CommitsListOptions{
+			commits, _, err := c.gh.Repositories.ListCommits(ctx, org, repo.Name, &github.CommitsListOptions{
 				SHA:         branch,
 				ListOptions: github.ListOptions{PerPage: 1},
 			})
@@ -31,17 +31,26 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []stri
 
 			latestCommit := commits[0]
 
-			// Fetch check runs for the latest commit
-			checkRuns, _, err := c.gh.Checks.ListCheckRunsForRef(ctx, org, repo, latestCommit.GetSHA(), &github.ListCheckRunsOptions{
+			var allCheckRuns []*github.CheckRun
+			opts := &github.ListCheckRunsOptions{
 				ListOptions: github.ListOptions{PerPage: 100},
-			})
-			if err != nil {
-				fmt.Printf("Error fetching check runs for %s/%s (branch: %s, SHA: %s): %v\n", org, repo, branch, latestCommit.GetSHA(), err)
-				continue
+			}
+
+			for {
+				checkRuns, resp, err := c.gh.Checks.ListCheckRunsForRef(ctx, org, repo.Name, latestCommit.GetSHA(), opts)
+				if err != nil {
+					fmt.Printf("Error fetching check runs for %s/%s (branch: %s, SHA: %s): %v\n", org, repo, branch, latestCommit.GetSHA(), err)
+					continue
+				}
+				allCheckRuns = append(allCheckRuns, checkRuns.CheckRuns...)
+				if resp.NextPage == 0 {
+					break
+				}
+				opts.Page = resp.NextPage
 			}
 
 			var checks []Check
-			for _, check := range checkRuns.CheckRuns {
+			for _, check := range allCheckRuns {
 				// Skip skipped checks
 				if check.GetConclusion() == "skipped" {
 					continue
@@ -56,7 +65,7 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []stri
 			}
 
 			branchCheck := BranchCheck{
-				Repository: repo,
+				Repository: repo.Name,
 				Branch:     branch,
 				CommitSHA:  latestCommit.GetSHA(),
 				CommitURL:  latestCommit.GetHTMLURL(),
