@@ -82,10 +82,8 @@ server:
 
 ## Gotchas
 
-- **`default.css` bug**: The `-css` flag defaults to `"default.css"` which doesn't exist — valid themes are `auto.css`, `light.css`, `dark.css`. Worse, the inline anti-flicker `<script>` in all three templates also defaults to `default.css` and runs before `dashboard.js`, so `dashboard.js`'s `auto.css` fallback is dead code — the inline script writes `default.css` to localStorage first on new browsers.
 - **WorkflowRuns are dead code**: `WorkflowRun` type, `SetWorkflowRuns`/`GetWorkflowRuns` storage methods, and the fetched data are all unused. No handler reads them.
 - **Builds view only renders two branches**: The handler hardcodes `main`/`master` and `develop`. Other branch names in `config.yaml` are fetched from the API but silently discarded by the builds handler.
-- **No `.gitignore`** — build artifact `ecmwf-dash` will show up in `git status`.
 - **GitHub API rate limits**: 12 repos × 2 branches = frequent polling. Ensure `GITHUB_TOKEN` has appropriate scopes (`repo`, `read:checks`).
 - **`CONTRIBUTOR` is treated as external**: `isInternal` only matches `OWNER`, `MEMBER`, or `COLLABORATOR`. Past contributors with merged PRs who aren't collaborators get the "external" badge.
 
@@ -96,10 +94,6 @@ server:
 
 ## Known Bugs
 
-- **Duplicated `</body></html>`** in `dashboard.html` (~line 171-172).
-- **`server.Close()` instead of `server.Shutdown(ctx)`** in `main.go` — active connections are killed immediately on SIGINT instead of draining gracefully.
-- **`fmt.Printf` instead of `log.Printf`** in `internal/github/actions.go` and `pulls.go` — error output has no timestamps and won't respect any future logger config.
-- **Inconsistent nil-template guard** — `/builds` and `/pulls` handlers check for nil templates before executing; `/issues` handler doesn't, so a nil `issuesTmpl` would panic instead of returning 500.
 - **PR check runs don't paginate** — `FetchBranchChecks` has a pagination loop but `fetchPRDetails` caps at 100 check runs with no pagination.
 - **`getAvailableCSS()` reads the filesystem on every request** — `os.ReadDir("web/static")` runs per page load to populate the theme dropdown.
 
