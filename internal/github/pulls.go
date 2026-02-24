@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/go-github/v66/github"
@@ -60,7 +61,7 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []conf
 				// Fetch additional details
 				if err := c.fetchPRDetails(ctx, org, repo.Name, ghPR.GetNumber(), &pr); err != nil {
 					// Log but continue
-					fmt.Printf("Error fetching PR details for %s/%s#%d: %v\n", org, repo, ghPR.GetNumber(), err)
+					log.Printf("Error fetching PR details for %s/%s#%d: %v", org, repo, ghPR.GetNumber(), err)
 				}
 
 				allPRs = append(allPRs, pr)

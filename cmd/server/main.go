@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ozaq/ecmwf-dash/internal/config"
 	"github.com/ozaq/ecmwf-dash/internal/fetcher"
@@ -20,7 +21,7 @@ import (
 
 func main() {
 	// Parse CLI flags
-	cssFile := flag.String("css", "default.css", "CSS file to use (relative to web/static/)")
+	cssFile := flag.String("css", "auto.css", "CSS file to use (relative to web/static/)")
 	flag.Parse()
 
 	// Load config
@@ -100,7 +101,11 @@ func main() {
 
 		log.Println("Shutting down...")
 		cancel()
-		server.Close()
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Error during shutdown: %v", err)
+		}
 	}()
 
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

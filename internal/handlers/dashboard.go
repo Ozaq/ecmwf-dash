@@ -96,7 +96,14 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		CSSFiles:    cssFiles,
 	}
 
+	if h.template == nil {
+		log.Printf("ERROR: template is nil!")
+		http.Error(w, "Template not initialized", http.StatusInternalServerError)
+		return
+	}
+
 	if err := h.template.Execute(w, data); err != nil {
+		log.Printf("Error executing issues template: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

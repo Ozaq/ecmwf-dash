@@ -9,7 +9,7 @@
         (function() {
             let savedCSS = localStorage.getItem('preferredCSS');
             if (!savedCSS) {
-                savedCSS = 'default.css';
+                savedCSS = 'auto.css';
                 localStorage.setItem('preferredCSS', savedCSS);
             }
             document.write('<link rel="stylesheet" href="static/' + savedCSS + '">');
@@ -166,7 +166,5 @@
     </div>
     
     <script src="static/dashboard.js"></script>
-</body>
-</html>
 </body>
 </html>

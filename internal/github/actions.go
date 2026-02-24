@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/go-github/v66/github"
@@ -21,7 +21,7 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []conf
 				ListOptions: github.ListOptions{PerPage: 1},
 			})
 			if err != nil {
-				fmt.Printf("Error fetching commits for %s/%s (branch: %s): %v\n", org, repo, branch, err)
+				log.Printf("Error fetching commits for %s/%s (branch: %s): %v", org, repo, branch, err)
 				continue
 			}
 
@@ -39,7 +39,7 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []conf
 			for {
 				checkRuns, resp, err := c.gh.Checks.ListCheckRunsForRef(ctx, org, repo.Name, latestCommit.GetSHA(), opts)
 				if err != nil {
-					fmt.Printf("Error fetching check runs for %s/%s (branch: %s, SHA: %s): %v\n", org, repo, branch, latestCommit.GetSHA(), err)
+					log.Printf("Error fetching check runs for %s/%s (branch: %s, SHA: %s): %v", org, repo, branch, latestCommit.GetSHA(), err)
 					continue
 				}
 				allCheckRuns = append(allCheckRuns, checkRuns.CheckRuns...)
