@@ -50,6 +50,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		PageID       string
 		Organization string
+		Version      string
 		PullRequests []github.PullRequest
 		LastUpdate   time.Time
 		CurrentPage  int
@@ -63,6 +64,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageID:       "pulls",
 		Organization: h.organization,
+		Version:      h.version,
 		PullRequests: pagePRs,
 		LastUpdate:   lastUpdate,
 		CurrentPage:  page,

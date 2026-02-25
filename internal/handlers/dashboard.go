@@ -28,9 +28,10 @@ type Handler struct {
 	cssFile       string
 	cssFiles      []CSSOption
 	organization  string
+	version       string
 }
 
-func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, cssFile string, staticDir string, org string) *Handler {
+func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, cssFile string, staticDir string, org string, version string) *Handler {
 	if issuesTmpl == nil {
 		panic("issuesTmpl must not be nil")
 	}
@@ -48,6 +49,7 @@ func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.T
 		cssFile:       cssFile,
 		cssFiles:      themeFiles(),
 		organization:  org,
+		version:       version,
 	}
 }
 
@@ -89,6 +91,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		PageID       string
 		Organization string
+		Version      string
 		Issues       []github.Issue
 		LastUpdate   time.Time
 		CurrentPage  int
@@ -102,6 +105,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageID:       "issues",
 		Organization: h.organization,
+		Version:      h.version,
 		Issues:       pageIssues,
 		LastUpdate:   lastUpdate,
 		CurrentPage:  page,

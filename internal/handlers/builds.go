@@ -84,6 +84,7 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		PageID       string
 		Organization string
+		Version      string
 		Repositories []*RepositoryStatus
 		LastUpdate   time.Time
 		CSSFile      string
@@ -91,6 +92,7 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageID:       "builds",
 		Organization: h.organization,
+		Version:      h.version,
 		Repositories: repositories,
 		LastUpdate:   lastUpdate,
 		CSSFile:      h.cssFile,

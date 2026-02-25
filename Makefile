@@ -1,7 +1,9 @@
 .PHONY: build test vet run docker-build docker-run clean
 
+VERSION ?= dev
+
 build:
-	go build -o ecmwf-dash cmd/server/main.go
+	go build -ldflags="-X main.Version=$(VERSION)" -o ecmwf-dash cmd/server/main.go
 
 test:
 	go test -race ./...

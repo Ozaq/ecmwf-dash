@@ -47,6 +47,7 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: VERSION=${{ github.event.release.tag_name }}
           tags: |
             ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:${{ github.event.release.tag_name }}
             ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:latest

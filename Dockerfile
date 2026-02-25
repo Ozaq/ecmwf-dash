@@ -4,7 +4,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
-RUN go build -ldflags="-s -w" -o /ecmwf-dash cmd/server/main.go
+ARG VERSION=dev
+RUN go build -ldflags="-s -w -X main.Version=${VERSION}" -o /ecmwf-dash cmd/server/main.go
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /healthcheck cmd/healthcheck/main.go
 
 FROM gcr.io/distroless/base-debian12

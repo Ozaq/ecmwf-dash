@@ -20,6 +20,8 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
+var Version = "dev"
+
 var templateFuncs = template.FuncMap{
 	"add": func(a, b int) int { return a + b },
 	"mul": func(a, b int) int { return a * b },
@@ -81,7 +83,7 @@ func main() {
 	}
 
 	// Create handler with cached CSS list
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, *cssFile, "web/static", cfg.GitHub.Organization)
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, *cssFile, "web/static", cfg.GitHub.Organization, Version)
 
 	// Setup routes
 	mux := http.NewServeMux()
