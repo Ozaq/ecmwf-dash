@@ -7,6 +7,17 @@
     Last updated: {{.LastUpdate.Format "Jan 2, 15:04:05 MST"}} |
     Repositories: {{len .Repositories}}
 </div>
+{{if .RepoNames}}
+<form class="filter-form" id="repo-filter-form" method="get">
+    <label for="repo-filter" class="sr-only">Filter by repository</label>
+    <select id="repo-filter" name="repo">
+        <option value="">All repositories</option>
+        {{range .RepoNames}}
+        <option value="{{.}}"{{if eq . $.Repo}} selected{{end}}>{{.}}</option>
+        {{end}}
+    </select>
+</form>
+{{end}}
 {{end}}
 
 {{define "build-lane"}}

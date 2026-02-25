@@ -65,6 +65,29 @@ func TestGetNextOrder(t *testing.T) {
 	}
 }
 
+func TestSanitizeRepo(t *testing.T) {
+	validRepos := []string{"eccodes", "atlas", "fckit"}
+
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"eccodes", "eccodes"},
+		{"atlas", "atlas"},
+		{"fckit", "fckit"},
+		{"", ""},
+		{"unknown", ""},
+		{"Eccodes", ""},
+		{"eccodes; DROP TABLE", ""},
+	}
+	for _, tt := range tests {
+		got := sanitizeRepo(tt.input, validRepos)
+		if got != tt.want {
+			t.Errorf("sanitizeRepo(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 func TestPaginate(t *testing.T) {
 	tests := []struct {
 		name                               string

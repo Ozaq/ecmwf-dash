@@ -22,6 +22,18 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 
 	sortBy := sanitizeSort(r.URL.Query().Get("sort"))
 	order := sanitizeOrder(r.URL.Query().Get("order"))
+	repo := sanitizeRepo(r.URL.Query().Get("repo"), h.repoNames)
+
+	// Filter by repo
+	if repo != "" {
+		filtered := prs[:0]
+		for _, pr := range prs {
+			if pr.Repository == repo {
+				filtered = append(filtered, pr)
+			}
+		}
+		prs = filtered
+	}
 
 	// Sort PRs
 	sortPullRequests(prs, sortBy, order)
@@ -58,6 +70,8 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		Sort          string
 		Order         string
 		NextOrder     string
+		Repo          string
+		RepoNames     []string
 		StaleRepos    map[string]bool
 		StaleRepoList []string
 	}{
@@ -72,6 +86,8 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		Sort:          sortBy,
 		Order:         order,
 		NextOrder:     getNextOrder(order),
+		Repo:          repo,
+		RepoNames:     h.repoNames,
 		StaleRepos:    staleMap,
 		StaleRepoList: staleList,
 	}

@@ -62,6 +62,18 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 	sortBy := sanitizeSort(r.URL.Query().Get("sort"))
 	order := sanitizeOrder(r.URL.Query().Get("order"))
+	repo := sanitizeRepo(r.URL.Query().Get("repo"), h.repoNames)
+
+	// Filter by repo
+	if repo != "" {
+		filtered := issues[:0]
+		for _, issue := range issues {
+			if issue.Repository == repo {
+				filtered = append(filtered, issue)
+			}
+		}
+		issues = filtered
+	}
 
 	// Sort issues
 	sortIssues(issues, sortBy, order)
@@ -98,6 +110,8 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		Sort          string
 		Order         string
 		NextOrder     string
+		Repo          string
+		RepoNames     []string
 		StaleRepos    map[string]bool
 		StaleRepoList []string
 	}{
@@ -112,6 +126,8 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		Sort:          sortBy,
 		Order:         order,
 		NextOrder:     getNextOrder(order),
+		Repo:          repo,
+		RepoNames:     h.repoNames,
 		StaleRepos:    staleMap,
 		StaleRepoList: staleList,
 	}

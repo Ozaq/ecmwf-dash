@@ -443,6 +443,23 @@ a:hover {
 .check-count.failure { color: var(--error-color); }
 .check-count.running { color: var(--warning-color); }
 
+/* Repo filter */
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-form select {
+    padding: 4px 8px;
+    border: var(--card-border);
+    border-radius: 4px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+}
+
 /* Stale data indicators */
 .stale-banner {
     background: color-mix(in srgb, var(--warning-color) 12%, var(--card-bg));

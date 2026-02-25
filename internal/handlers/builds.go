@@ -105,6 +105,17 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 
 	repositories := groupByRepository(branchChecks, h.repoNames)
 
+	repo := sanitizeRepo(r.URL.Query().Get("repo"), h.repoNames)
+	if repo != "" {
+		var filtered []*RepositoryStatus
+		for _, r := range repositories {
+			if r.Name == repo {
+				filtered = append(filtered, r)
+			}
+		}
+		repositories = filtered
+	}
+
 	// Compute staleness (skip on cold start)
 	var staleMap map[string]bool
 	var staleList []string
@@ -117,8 +128,8 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 	if staleMap == nil {
 		staleMap = make(map[string]bool)
 	}
-	for _, repo := range repositories {
-		repo.Stale = staleMap[repo.Name]
+	for _, r := range repositories {
+		r.Stale = staleMap[r.Name]
 	}
 
 	data := struct {
@@ -127,6 +138,8 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		Version       string
 		Repositories  []*RepositoryStatus
 		LastUpdate    time.Time
+		Repo          string
+		RepoNames     []string
 		StaleRepos    map[string]bool
 		StaleRepoList []string
 	}{
@@ -135,6 +148,8 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		Version:       h.version,
 		Repositories:  repositories,
 		LastUpdate:    lastUpdate,
+		Repo:          repo,
+		RepoNames:     h.repoNames,
 		StaleRepos:    staleMap,
 		StaleRepoList: staleList,
 	}

@@ -32,6 +32,18 @@ func getNextOrder(current string) string {
 	return "asc"
 }
 
+func sanitizeRepo(repo string, validRepos []string) string {
+	if repo == "" {
+		return ""
+	}
+	for _, r := range validRepos {
+		if r == repo {
+			return repo
+		}
+	}
+	return ""
+}
+
 // paginate returns clamped start/end indices and total page count for the
 // given total item count, 1-based page number, and page size.
 func paginate(total, page, pageSize int) (start, end, totalPages int) {

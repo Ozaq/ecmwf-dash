@@ -74,6 +74,13 @@
         row.setAttribute('aria-expanded', expanded);
     });
 
+    // Repo filter — auto-submit on change (CSP-compliant, no inline handler)
+    document.addEventListener('change', function(e) {
+        if (e.target.id !== 'repo-filter') return;
+        var form = e.target.closest('form');
+        if (form) form.submit();
+    });
+
     document.addEventListener('keydown', function(e) {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         var row = e.target.closest('.build-row.has-details');

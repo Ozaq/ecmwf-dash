@@ -8,6 +8,19 @@
     Total issues: {{.TotalIssues}} |
     Showing {{if .Issues}}{{add (mul (add .CurrentPage -1) 100) 1}}-{{add (mul (add .CurrentPage -1) 100) (len .Issues)}}{{else}}0{{end}} of {{.TotalIssues}}
 </div>
+{{if .RepoNames}}
+<form class="filter-form" id="repo-filter-form" method="get">
+    <input type="hidden" name="sort" value="{{.Sort}}">
+    <input type="hidden" name="order" value="{{.Order}}">
+    <label for="repo-filter" class="sr-only">Filter by repository</label>
+    <select id="repo-filter" name="repo">
+        <option value="">All repositories</option>
+        {{range .RepoNames}}
+        <option value="{{.}}"{{if eq . $.Repo}} selected{{end}}>{{.}}</option>
+        {{end}}
+    </select>
+</form>
+{{end}}
 {{end}}
 
 {{define "content"}}
@@ -23,7 +36,7 @@
         <thead>
             <tr>
                 <th aria-sort="{{if eq .Sort "repo"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
-                    <a href="?sort=repo&order={{if and (eq .Sort "repo") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
+                    <a href="?sort=repo&order={{if and (eq .Sort "repo") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Repository
                         <span class="sort-arrow {{if eq .Sort "repo"}}active{{end}}">
                             {{if and (eq .Sort "repo") (eq .Order "asc")}}&#8593;{{else if and (eq .Sort "repo") (eq .Order "desc")}}&#8595;{{else}}&#8597;{{end}}
@@ -31,7 +44,7 @@
                     </a>
                 </th>
                 <th aria-sort="{{if eq .Sort "number"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
-                    <a href="?sort=number&order={{if and (eq .Sort "number") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
+                    <a href="?sort=number&order={{if and (eq .Sort "number") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         #
                         <span class="sort-arrow {{if eq .Sort "number"}}active{{end}}">
                             {{if and (eq .Sort "number") (eq .Order "asc")}}&#8593;{{else if and (eq .Sort "number") (eq .Order "desc")}}&#8595;{{else}}&#8597;{{end}}
@@ -39,7 +52,7 @@
                     </a>
                 </th>
                 <th aria-sort="{{if eq .Sort "title"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
-                    <a href="?sort=title&order={{if and (eq .Sort "title") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
+                    <a href="?sort=title&order={{if and (eq .Sort "title") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Title
                         <span class="sort-arrow {{if eq .Sort "title"}}active{{end}}">
                             {{if and (eq .Sort "title") (eq .Order "asc")}}&#8593;{{else if and (eq .Sort "title") (eq .Order "desc")}}&#8595;{{else}}&#8597;{{end}}
@@ -47,7 +60,7 @@
                     </a>
                 </th>
                 <th aria-sort="{{if eq .Sort "author"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
-                    <a href="?sort=author&order={{if and (eq .Sort "author") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
+                    <a href="?sort=author&order={{if and (eq .Sort "author") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Author
                         <span class="sort-arrow {{if eq .Sort "author"}}active{{end}}">
                             {{if and (eq .Sort "author") (eq .Order "asc")}}&#8593;{{else if and (eq .Sort "author") (eq .Order "desc")}}&#8595;{{else}}&#8597;{{end}}
@@ -55,7 +68,7 @@
                     </a>
                 </th>
                 <th aria-sort="{{if eq .Sort "updated"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
-                    <a href="?sort=updated&order={{if and (eq .Sort "updated") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
+                    <a href="?sort=updated&order={{if and (eq .Sort "updated") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Last Activity
                         <span class="sort-arrow {{if eq .Sort "updated"}}active{{end}}">
                             {{if and (eq .Sort "updated") (eq .Order "asc")}}&#8593;{{else if and (eq .Sort "updated") (eq .Order "desc")}}&#8595;{{else}}&#8597;{{end}}
@@ -63,7 +76,7 @@
                     </a>
                 </th>
                 <th aria-sort="{{if eq .Sort "created"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
-                    <a href="?sort=created&order={{if and (eq .Sort "created") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}">
+                    <a href="?sort=created&order={{if and (eq .Sort "created") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Created
                         <span class="sort-arrow {{if eq .Sort "created"}}active{{end}}">
                             {{if and (eq .Sort "created") (eq .Order "asc")}}&#8593;{{else if and (eq .Sort "created") (eq .Order "desc")}}&#8595;{{else}}&#8597;{{end}}
@@ -111,8 +124,8 @@
 {{if gt .TotalPages 1}}
 <div class="pagination">
     {{if gt .CurrentPage 1}}
-        <a href="?sort={{.Sort}}&order={{.Order}}&page=1">&#171; First</a>
-        <a href="?sort={{.Sort}}&order={{.Order}}&page={{.CurrentPage | add -1}}">&#8249; Previous</a>
+        <a href="?sort={{.Sort}}&order={{.Order}}&page=1&repo={{.Repo}}">&#171; First</a>
+        <a href="?sort={{.Sort}}&order={{.Order}}&page={{.CurrentPage | add -1}}&repo={{.Repo}}">&#8249; Previous</a>
     {{else}}
         <span class="pagination-disabled" role="link" aria-disabled="true">&#171; First</span>
         <span class="pagination-disabled" role="link" aria-disabled="true">&#8249; Previous</span>
@@ -121,8 +134,8 @@
     <span class="pagination-info">Page {{.CurrentPage}} of {{.TotalPages}}</span>
 
     {{if lt .CurrentPage .TotalPages}}
-        <a href="?sort={{.Sort}}&order={{.Order}}&page={{.CurrentPage | add 1}}">Next &#8250;</a>
-        <a href="?sort={{.Sort}}&order={{.Order}}&page={{.TotalPages}}">Last &#187;</a>
+        <a href="?sort={{.Sort}}&order={{.Order}}&page={{.CurrentPage | add 1}}&repo={{.Repo}}">Next &#8250;</a>
+        <a href="?sort={{.Sort}}&order={{.Order}}&page={{.TotalPages}}&repo={{.Repo}}">Last &#187;</a>
     {{else}}
         <span class="pagination-disabled" role="link" aria-disabled="true">Next &#8250;</span>
         <span class="pagination-disabled" role="link" aria-disabled="true">Last &#187;</span>
