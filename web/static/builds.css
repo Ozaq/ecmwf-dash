@@ -1,148 +1,287 @@
-/* Builds page specific styles */
-.build-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+/* Builds page — flat list layout */
+
+/* ===== List container ===== */
+.build-list {
+    margin-top: 16px;
 }
 
-.build-card {
-    background: var(--card-bg);
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: var(--shadow);
-    border: var(--card-border);
-}
-
-.card-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+/* ===== Row ===== */
+.build-row {
     border-bottom: var(--divider);
 }
 
-.repo-name {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0;
-    color: var(--primary-text);
-}
-
-.branch-section {
-    margin-bottom: 16px;
-}
-
-.branch-section:last-child {
-    margin-bottom: 0;
-}
-
-.branch-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.branch-name {
-    font-weight: 500;
-    color: var(--secondary-text);
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-}
-
-.latest-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-}
-
-.status-icon {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.status-success { background: var(--success-color); }
-.status-failure { background: var(--error-color); }
-.status-running { background: var(--warning-color); }
-.status-neutral { background: var(--neutral-color); }
-
-.runs-matrix {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 8px;
-}
-
-.run-dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 2px;
-    display: block;
-    transition: transform 0.1s;
+.build-row.has-details {
     cursor: pointer;
-    position: relative;
-    min-width: 20px;
+}
+
+.build-row.has-details:hover {
+    background: var(--hover-bg);
+}
+
+.build-row:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: -2px;
+}
+
+/* ===== Row header grid ===== */
+.build-row-header {
+    display: grid;
+    grid-template-columns: 160px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 8px;
+    min-height: 52px;
+}
+
+/* ===== Repo name ===== */
+.build-repo {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary-text);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.build-repo:hover {
+    text-decoration: underline;
+}
+
+/* ===== Lanes container ===== */
+.build-lanes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* ===== Single lane (one branch) ===== */
+.build-lane {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     min-height: 20px;
 }
 
-.run-dot:hover {
-    transform: scale(1.3);
-    z-index: 1;
+.lane-branch {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--secondary-text);
+    width: 64px;
+    flex-shrink: 0;
 }
 
-.run-dot:focus-visible {
+/* ===== All-green affirmation ===== */
+.lane-affirm {
+    font-style: italic;
+    font-size: 13px;
+    color: var(--success-color);
+}
+
+/* ===== No checks ===== */
+.lane-empty {
+    font-style: italic;
+    font-size: 12px;
+    color: var(--muted-text);
+}
+
+/* ===== Dot strip ===== */
+.lane-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    max-height: 26px;
+    overflow: hidden;
+    align-items: flex-start;
+}
+
+.lane-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
+    display: block;
+    opacity: 0.7;
+    transition: transform 0.1s, opacity 0.1s;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.lane-dot:hover {
+    transform: scale(2);
+    opacity: 1;
+    z-index: 10;
+}
+
+.lane-dot:focus-visible {
     outline: none;
-    outline-offset: 0;
     box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--accent-color);
 }
 
-.run-dot:hover::after {
+/* Dot status colors */
+.lane-dot.status-success { background: var(--success-color); }
+.lane-dot.status-failure { background: var(--error-color); }
+.lane-dot.status-running { background: var(--warning-color); }
+.lane-dot.status-neutral { background: var(--neutral-color); }
+
+/* Dot tooltip */
+.lane-dot:hover::after {
     content: attr(data-tooltip);
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 125%;
+    bottom: calc(100% + 6px);
     background-color: var(--text-color);
     color: var(--card-bg);
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 4px 6px;
+    border-radius: 3px;
     font-size: 11px;
     white-space: nowrap;
     pointer-events: none;
     z-index: 9999;
 }
 
-.run-dot:hover::before {
+.lane-dot:hover::before {
     content: "";
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 115%;
+    bottom: calc(100% + 2px);
     border-width: 4px;
     border-style: solid;
     border-color: var(--text-color) transparent transparent transparent;
     z-index: 9999;
 }
 
-.no-runs {
-    color: var(--muted-text);
-    font-style: italic;
-    font-size: 14px;
-    padding: 8px 0;
+/* ===== Compact counts ===== */
+.lane-counts {
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-/* Builds-specific responsive */
+.count-failure { color: var(--error-color); }
+.count-running { color: var(--warning-color); }
+
+/* ===== Chevron ===== */
+.build-chevron {
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid var(--secondary-text);
+    border-bottom: 2px solid var(--secondary-text);
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.build-chevron-spacer {
+    width: 10px;
+    flex-shrink: 0;
+}
+
+.build-row.is-expanded .build-chevron {
+    transform: rotate(-135deg);
+}
+
+/* ===== Expandable details (grid-rows animation) ===== */
+.build-details {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.25s ease;
+}
+
+.build-row.is-expanded .build-details {
+    grid-template-rows: 1fr;
+}
+
+.build-details-inner {
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ===== Detail content ===== */
+.detail-branch {
+    padding: 8px 8px 8px 184px;
+}
+
+.detail-branch + .detail-branch {
+    padding-top: 0;
+}
+
+.detail-branch-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--secondary-text);
+    margin-bottom: 4px;
+    display: block;
+}
+
+.detail-checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.detail-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.detail-check a {
+    color: var(--primary-text);
+    text-decoration: none;
+}
+
+.detail-check a:hover {
+    text-decoration: underline;
+}
+
+.detail-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.detail-indicator.status-failure { background: var(--error-color); }
+.detail-indicator.status-running { background: var(--warning-color); }
+
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
-    .build-cards {
-        grid-template-columns: 1fr;
+    .build-row-header {
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 8px;
     }
-}
 
-@media (min-width: 1200px) {
-    .build-cards {
-        grid-template-columns: repeat(3, 1fr);
+    .build-repo {
+        grid-column: 1 / -1;
+        font-size: 14px;
+    }
+
+    .build-lanes {
+        grid-column: 1;
+    }
+
+    .lane-branch {
+        width: 52px;
+        font-size: 9px;
+    }
+
+    .detail-branch {
+        padding-left: 8px;
     }
 }

@@ -1,0 +1,102 @@
+{{define "tv-branch-section"}}
+<div class="branch-section {{if eq .Branch "develop"}}branch-develop{{else}}branch-main{{end}} {{if gt .FailureCount 0}}has-failures{{else if gt .RunningCount 0}}has-running{{end}}">
+    <div class="branch-header">
+        <span class="branch-name">{{.Branch}}</span>
+        {{if .HasChecks}}
+        <div class="branch-summary">
+            {{if and (eq .FailureCount 0) (eq .RunningCount 0)}}
+            <span class="summary-pill pill-success">{{affirm}}</span>
+            {{else}}
+            {{if gt .SuccessCount 0}}<span class="summary-count count-success">{{.SuccessCount}} ok</span>{{end}}
+            {{if gt .FailureCount 0}}<span class="summary-count count-failure">{{.FailureCount}} failed</span>{{end}}
+            {{if gt .RunningCount 0}}<span class="summary-count count-running">{{.RunningCount}} running</span>{{end}}
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    {{if .HasChecks}}
+        {{if gt .FailureCount 0}}
+        <ul class="failure-list">
+            {{range .Checks}}
+                {{if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled")}}
+                <li class="failure-item">
+                    <span class="failure-indicator"></span>
+                    <span class="failure-name">{{.Name}}</span>
+                </li>
+                {{end}}
+            {{end}}
+        </ul>
+        {{end}}
+        {{if gt .RunningCount 0}}
+        <ul class="running-list">
+            {{range .Checks}}
+                {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}
+                <li class="running-item">
+                    <span class="running-indicator"></span>
+                    <span class="running-name">{{.Name}}</span>
+                </li>
+                {{end}}
+            {{end}}
+        </ul>
+        {{end}}
+    {{else}}
+    <div class="no-runs">&mdash;</div>
+    {{end}}
+</div>
+{{end}}
+
+<!DOCTYPE html>
+<html lang="en" class="tv-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Organization}} — Build Status Dashboard</title>
+    <link rel="stylesheet" href="/static/base.css">
+    <link rel="stylesheet" href="/static/builds.css">
+    <link rel="stylesheet" href="/static/tv.css">
+    <link rel="stylesheet" href="/static/{{.CSSFile}}">
+    <script>
+        (function() {
+            var css = localStorage.getItem('preferredCSS');
+            if (css && /^[\w.-]+\.css$/.test(css)) {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.id = 'theme-link';
+                link.href = '/static/' + css;
+                document.head.appendChild(link);
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div class="tv-container">
+        <div class="tv-status-bar">
+            <span>{{.Organization}} — Build Status</span>
+            <div class="tv-status-right">
+                <span class="tv-updated">Updated {{.LastUpdate.Format "15:04:05"}}</span>
+                <span class="tv-countdown" id="tv-countdown"></span>
+            </div>
+        </div>
+        <main class="tv-main">
+            {{if not .Repositories}}
+            <div class="empty-state">
+                <p>No build status data available yet.</p>
+            </div>
+            {{else}}
+            <div class="build-cards">
+                {{range .Repositories}}
+                <div class="build-card">
+                    <div class="card-header">
+                        <h3 class="repo-name">{{.Name}}</h3>
+                    </div>
+                    {{template "tv-branch-section" .MainBranch}}
+                    {{template "tv-branch-section" .DevelopBranch}}
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+        </main>
+    </div>
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

@@ -21,17 +21,19 @@ type CSSOption struct {
 const issuesPerPage = 100
 
 type Handler struct {
-	storage       storage.Store
-	template      *template.Template
-	prTemplate    *template.Template
-	buildTemplate *template.Template
-	cssFile       string
-	cssFiles      []CSSOption
-	organization  string
-	version       string
+	storage           storage.Store
+	template          *template.Template
+	prTemplate        *template.Template
+	buildTemplate     *template.Template
+	dashboardTemplate *template.Template
+	cssFile           string
+	cssFiles          []CSSOption
+	organization      string
+	version           string
+	repoNames         []string
 }
 
-func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, cssFile string, staticDir string, org string, version string) *Handler {
+func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, cssFile string, staticDir string, org string, version string, repoNames []string) *Handler {
 	if issuesTmpl == nil {
 		panic("issuesTmpl must not be nil")
 	}
@@ -41,15 +43,20 @@ func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.T
 	if buildTmpl == nil {
 		panic("buildTmpl must not be nil")
 	}
+	if dashboardTmpl == nil {
+		panic("dashboardTmpl must not be nil")
+	}
 	return &Handler{
-		storage:       store,
-		template:      issuesTmpl,
-		prTemplate:    prsTmpl,
-		buildTemplate: buildTmpl,
-		cssFile:       cssFile,
-		cssFiles:      themeFiles(),
-		organization:  org,
-		version:       version,
+		storage:           store,
+		template:          issuesTmpl,
+		prTemplate:        prsTmpl,
+		buildTemplate:     buildTmpl,
+		dashboardTemplate: dashboardTmpl,
+		cssFile:           cssFile,
+		cssFiles:          themeFiles(),
+		organization:      org,
+		version:           version,
+		repoNames:         repoNames,
 	}
 }
 

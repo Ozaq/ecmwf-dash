@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,9 +23,35 @@ import (
 
 var Version = "dev"
 
+var affirmations = []string{
+	"All clear!",
+	"Ship it!",
+	"Nailed it!",
+	"All green!",
+	"Smooth sailing!",
+	"Looking good!",
+	"Rock solid!",
+	"On point!",
+	"Crushing it!",
+	"Zero issues!",
+	"Clean sweep!",
+	"Top notch!",
+	"Flawless!",
+	"All systems go!",
+	"Nice work!",
+	"Spot on!",
+	"Well done!",
+	"No worries!",
+	"Locked in!",
+	"All good!",
+}
+
 var templateFuncs = template.FuncMap{
 	"add": func(a, b int) int { return a + b },
 	"mul": func(a, b int) int { return a * b },
+	"affirm": func() string {
+		return affirmations[rand.IntN(len(affirmations))]
+	},
 }
 
 func main() {
@@ -76,18 +103,30 @@ func main() {
 		log.Fatal("Failed to load builds template:", err)
 	}
 
+	dashboardTmpl, err := template.New("builds_dashboard.html").Funcs(templateFuncs).ParseFiles("web/templates/builds_dashboard.html", "web/templates/builds.html")
+	if err != nil {
+		log.Fatal("Failed to load builds dashboard template:", err)
+	}
+
 	// Validate -css flag against theme allowlist
 	validThemes := map[string]bool{"auto.css": true, "light.css": true, "dark.css": true}
 	if !validThemes[*cssFile] {
 		log.Fatalf("Invalid -css value %q: must be one of auto.css, light.css, dark.css", *cssFile)
 	}
 
+	// Extract configured repo names for the builds dashboard
+	repoNames := make([]string, len(cfg.GitHub.Repositories))
+	for i, repo := range cfg.GitHub.Repositories {
+		repoNames[i] = repo.Name
+	}
+
 	// Create handler with cached CSS list
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, *cssFile, "web/static", cfg.GitHub.Organization, Version)
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, *cssFile, "web/static", cfg.GitHub.Organization, Version, repoNames)
 
 	// Setup routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/builds", handler.BuildStatus)
+	mux.HandleFunc("/builds-dashboard", handler.BuildsDashboard)
 	mux.HandleFunc("/pulls", handler.PullRequests)
 	mux.HandleFunc("/issues", handler.Dashboard)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))

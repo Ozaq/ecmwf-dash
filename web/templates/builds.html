@@ -9,35 +9,29 @@
 </div>
 {{end}}
 
-{{define "branch-section"}}
-<div class="branch-section">
-    <div class="branch-header">
-        <span class="branch-name">{{.Branch}}</span>
-        {{if .HasChecks}}
-        <div class="latest-status">
-            <span role="img" class="status-icon {{.StatusClass}}" aria-label="{{.OverallStatus}}"></span>
-            <span>{{.OverallStatus}}</span>
-        </div>
-        {{end}}
-    </div>
-
+{{define "build-lane"}}
+<div class="build-lane">
+    <span class="lane-branch">{{.Branch}}</span>
     {{if .HasChecks}}
-    <div class="runs-matrix">
-        {{range .Checks}}
-        <a href="{{.URL}}" target="_blank" rel="noopener noreferrer"
-           aria-label="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
-           data-tooltip="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
-           class="run-dot {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled")}}status-failure{{else if eq .Conclusion "success"}}status-success{{else}}status-neutral{{end}}">
-        </a>
+        {{if and (eq .FailureCount 0) (eq .RunningCount 0)}}
+        <span class="lane-affirm">{{affirm}}</span>
+        {{else}}
+        <div class="lane-strip">
+            {{range .Checks}}
+            <a href="{{.URL}}" target="_blank" rel="noopener noreferrer"
+               aria-label="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
+               data-tooltip="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
+               class="lane-dot {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled")}}status-failure{{else if eq .Conclusion "success"}}status-success{{else}}status-neutral{{end}}">
+            </a>
+            {{end}}
+        </div>
+        <span class="lane-counts">
+            {{if gt .FailureCount 0}}<span class="count-failure">&#x2715;{{.FailureCount}}</span>{{end}}
+            {{if gt .RunningCount 0}}<span class="count-running">&#x25CB;{{.RunningCount}}</span>{{end}}
+        </span>
         {{end}}
-    </div>
-    <div class="checks-summary">
-        {{if gt .SuccessCount 0}}<span class="check-count success">{{.SuccessCount}} passed</span>{{end}}
-        {{if gt .FailureCount 0}}<span class="check-count failure">{{.FailureCount}} failed</span>{{end}}
-        {{if gt .RunningCount 0}}<span class="check-count running">{{.RunningCount}} running</span>{{end}}
-    </div>
     {{else}}
-    <div class="no-runs">No recent checks</div>
+    <span class="lane-empty">No checks</span>
     {{end}}
 </div>
 {{end}}
@@ -49,17 +43,58 @@
     {{if .LastUpdate.IsZero}}<p class="empty-state-hint">Data is still loading. Check back shortly.</p>{{end}}
 </div>
 {{else}}
-<div class="build-cards">
+<div class="build-list">
     {{range .Repositories}}
-    <div class="build-card">
-        <div class="card-header">
-            <h3 class="repo-name">
-                <a href="https://github.com/{{$.Organization}}/{{.Name}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
-            </h3>
+    {{$hasDetails := or (gt .MainBranch.FailureCount 0) (gt .MainBranch.RunningCount 0) (gt .DevelopBranch.FailureCount 0) (gt .DevelopBranch.RunningCount 0)}}
+    <div class="build-row {{if $hasDetails}}has-details{{end}}" {{if $hasDetails}}role="button" tabindex="0" aria-expanded="false"{{end}}>
+        <div class="build-row-header">
+            <a class="build-repo" href="https://github.com/{{$.Organization}}/{{.Name}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
+            <div class="build-lanes">
+                {{template "build-lane" .DevelopBranch}}
+                {{template "build-lane" .MainBranch}}
+            </div>
+            {{if $hasDetails}}
+            <span class="build-chevron" aria-hidden="true"></span>
+            {{else}}
+            <span class="build-chevron-spacer"></span>
+            {{end}}
         </div>
-
-        {{template "branch-section" .MainBranch}}
-        {{template "branch-section" .DevelopBranch}}
+        {{if $hasDetails}}
+        <div class="build-details">
+            <div class="build-details-inner">
+                {{if or (gt .DevelopBranch.FailureCount 0) (gt .DevelopBranch.RunningCount 0)}}
+                <div class="detail-branch">
+                    <span class="detail-branch-label">{{.DevelopBranch.Branch}}</span>
+                    <ul class="detail-checks">
+                        {{range .DevelopBranch.Checks}}
+                            {{if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled") (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}
+                            <li class="detail-check">
+                                <span class="detail-indicator {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else}}status-failure{{end}}"></span>
+                                <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
+                            </li>
+                            {{end}}
+                        {{end}}
+                    </ul>
+                </div>
+                {{end}}
+                {{if or (gt .MainBranch.FailureCount 0) (gt .MainBranch.RunningCount 0)}}
+                <div class="detail-branch">
+                    <span class="detail-branch-label">{{.MainBranch.Branch}}</span>
+                    <ul class="detail-checks">
+                        {{range .MainBranch.Checks}}
+                            {{if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled") (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}
+                            <li class="detail-check">
+                                <span class="detail-indicator {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else}}status-failure{{end}}"></span>
+                                <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
+                            </li>
+                            {{end}}
+                        {{end}}
+                    </ul>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
     </div>
     {{end}}
 </div>
