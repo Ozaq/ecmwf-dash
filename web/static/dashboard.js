@@ -2,8 +2,60 @@
 (function() {
     'use strict';
 
-    // Auto-refresh every 60s (all pages)
-    setInterval(function() { window.location.reload(); }, 60000);
+    // Auto-refresh every 60s — fetch-and-replace to preserve scroll + expanded state
+    // TV mode has its own countdown-based reload, so skip it here.
+    if (!document.documentElement.classList.contains('tv-mode')) {
+        function scheduleRefresh() {
+            setTimeout(function() {
+                fetch(window.location.href).then(function(resp) {
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    return resp.text();
+                }).then(function(html) {
+                    var currentContainer = document.querySelector('.container');
+                    if (!currentContainer) return;
+
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    var newContainer = doc.querySelector('.container');
+                    if (!newContainer) return;
+
+                    // Capture state just before swap (minimizes race window)
+                    var scrollY = window.scrollY;
+                    var expandedRepos = [];
+                    var expanded = currentContainer.querySelectorAll('.build-row.is-expanded');
+                    for (var i = 0; i < expanded.length; i++) {
+                        var repo = expanded[i].querySelector('.build-repo');
+                        if (repo) expandedRepos.push(repo.textContent.trim());
+                    }
+
+                    // Swap DOM nodes (no innerHTML — adopt parsed nodes directly)
+                    while (currentContainer.firstChild) {
+                        currentContainer.removeChild(currentContainer.firstChild);
+                    }
+                    while (newContainer.firstChild) {
+                        currentContainer.appendChild(document.adoptNode(newContainer.firstChild));
+                    }
+
+                    // Restore expanded build rows
+                    if (expandedRepos.length > 0) {
+                        var rows = currentContainer.querySelectorAll('.build-row.has-details');
+                        for (var j = 0; j < rows.length; j++) {
+                            var repoEl = rows[j].querySelector('.build-repo');
+                            if (repoEl && expandedRepos.indexOf(repoEl.textContent.trim()) !== -1) {
+                                rows[j].classList.add('is-expanded');
+                                rows[j].setAttribute('aria-expanded', 'true');
+                            }
+                        }
+                    }
+
+                    // Restore scroll position
+                    window.scrollTo(0, scrollY);
+                }).catch(function(err) {
+                    console.warn('Auto-refresh failed:', err);
+                }).then(scheduleRefresh, scheduleRefresh);
+            }, 60000);
+        }
+        scheduleRefresh();
+    }
 
     // Avatar fallback — hide broken images
     document.addEventListener('error', function(e) {
