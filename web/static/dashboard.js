@@ -2,40 +2,8 @@
 (function() {
     'use strict';
 
-    var CSS_RE = /^[\w.-]+\.css$/;
-
-    // Theme switching via id="theme-link"
-    function changeStyle(newCSS) {
-        if (!CSS_RE.test(newCSS)) return;
-
-        var themeLink = document.getElementById('theme-link');
-        if (themeLink) {
-            themeLink.href = '/static/' + newCSS;
-        } else {
-            var link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.id = 'theme-link';
-            link.href = '/static/' + newCSS;
-            document.head.appendChild(link);
-        }
-        localStorage.setItem('preferredCSS', newCSS);
-    }
-
     // Auto-refresh every 60s (all pages)
     setInterval(function() { window.location.reload(); }, 60000);
-
-    // Theme dropdown init + event listener (replaces inline onchange)
-    document.addEventListener('DOMContentLoaded', function() {
-        var select = document.getElementById('style-select');
-        if (select) {
-            var currentCSS = localStorage.getItem('preferredCSS') || 'auto.css';
-            select.value = currentCSS;
-
-            select.addEventListener('change', function() {
-                changeStyle(select.value);
-            });
-        }
-    });
 
     // Avatar fallback — hide broken images
     document.addEventListener('error', function(e) {

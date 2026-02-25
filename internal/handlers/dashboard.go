@@ -12,12 +12,6 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
-// CSSOption represents a theme file entry for the dropdown.
-type CSSOption struct {
-	Value       string // filename, e.g. "auto.css"
-	DisplayName string // display text, e.g. "Auto"
-}
-
 const issuesPerPage = 100
 
 type Handler struct {
@@ -26,14 +20,12 @@ type Handler struct {
 	prTemplate        *template.Template
 	buildTemplate     *template.Template
 	dashboardTemplate *template.Template
-	cssFile           string
-	cssFiles          []CSSOption
 	organization      string
 	version           string
 	repoNames         []string
 }
 
-func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, cssFile string, staticDir string, org string, version string, repoNames []string) *Handler {
+func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, org string, version string, repoNames []string) *Handler {
 	if issuesTmpl == nil {
 		panic("issuesTmpl must not be nil")
 	}
@@ -52,8 +44,6 @@ func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.T
 		prTemplate:        prsTmpl,
 		buildTemplate:     buildTmpl,
 		dashboardTemplate: dashboardTmpl,
-		cssFile:           cssFile,
-		cssFiles:          themeFiles(),
 		organization:      org,
 		version:           version,
 		repoNames:         repoNames,
@@ -107,8 +97,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		Sort         string
 		Order        string
 		NextOrder    string
-		CSSFile      string
-		CSSFiles     []CSSOption
 	}{
 		PageID:       "issues",
 		Organization: h.organization,
@@ -121,8 +109,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		Sort:         sortBy,
 		Order:        order,
 		NextOrder:    getNextOrder(order),
-		CSSFile:      h.cssFile,
-		CSSFiles:     h.cssFiles,
 	}
 
 	renderTemplate(w, h.template, "base", data)
@@ -180,13 +166,4 @@ func getNextOrder(current string) string {
 		return "desc"
 	}
 	return "asc"
-}
-
-// themeFiles returns the allowlisted theme CSS options.
-func themeFiles() []CSSOption {
-	return []CSSOption{
-		{Value: "auto.css", DisplayName: "Auto"},
-		{Value: "light.css", DisplayName: "Light"},
-		{Value: "dark.css", DisplayName: "Dark"},
-	}
 }

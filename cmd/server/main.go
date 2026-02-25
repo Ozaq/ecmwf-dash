@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -55,10 +54,6 @@ var templateFuncs = template.FuncMap{
 }
 
 func main() {
-	// Parse CLI flags
-	cssFile := flag.String("css", "auto.css", "CSS file to use (relative to web/static/)")
-	flag.Parse()
-
 	// Load config
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
@@ -108,20 +103,14 @@ func main() {
 		log.Fatal("Failed to load builds dashboard template:", err)
 	}
 
-	// Validate -css flag against theme allowlist
-	validThemes := map[string]bool{"auto.css": true, "light.css": true, "dark.css": true}
-	if !validThemes[*cssFile] {
-		log.Fatalf("Invalid -css value %q: must be one of auto.css, light.css, dark.css", *cssFile)
-	}
-
 	// Extract configured repo names for the builds dashboard
 	repoNames := make([]string, len(cfg.GitHub.Repositories))
 	for i, repo := range cfg.GitHub.Repositories {
 		repoNames[i] = repo.Name
 	}
 
-	// Create handler with cached CSS list
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, *cssFile, "web/static", cfg.GitHub.Organization, Version, repoNames)
+	// Create handler
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, cfg.GitHub.Organization, Version, repoNames)
 
 	// Setup routes
 	mux := http.NewServeMux()
@@ -202,7 +191,7 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		w.Header().Set("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' 'sha256-0jlVAe+b64UKdjnXkkbAXXq5QaZvm8bamP8+r3PxgCY='; "+
+				"script-src 'self'; "+
 				"style-src 'self' 'unsafe-inline'; "+
 				"img-src 'self' https://avatars.githubusercontent.com; "+
 				"base-uri 'self'; "+

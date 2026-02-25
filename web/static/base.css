@@ -1,22 +1,22 @@
 /* Base structural CSS with CSS custom properties for theming */
 :root {
-    --bg-color: #DEE3E2;
-    --card-bg: #ffffff;
-    --card-border: 1px solid rgba(17, 105, 121, 0.1);
-    --text-color: #116979;
-    --secondary-text: #0e7c7c;
-    --accent-color: #DE7119;
-    --interactive-color: #18B0B0;
-    --border-color: rgba(17, 105, 121, 0.1);
-    --hover-bg: rgba(222, 227, 226, 0.3);
-    --shadow: 0 2px 8px rgba(17, 105, 121, 0.1);
-    --primary-text: #116979;
-    --divider: 1px solid rgba(17, 105, 121, 0.1);
+    --bg-color: #E8EDF2;
+    --card-bg: #FFFFFF;
+    --card-border: 1px solid rgba(26, 54, 93, 0.12);
+    --text-color: #1A365D;
+    --secondary-text: #2B5A8C;
+    --accent-color: #C87519;
+    --interactive-color: #2E74B5;
+    --border-color: rgba(26, 54, 93, 0.12);
+    --hover-bg: rgba(232, 237, 242, 0.5);
+    --shadow: 0 2px 8px rgba(26, 54, 93, 0.10);
+    --primary-text: #1A365D;
+    --divider: 1px solid rgba(26, 54, 93, 0.12);
     --success-color: #1a7f37;
     --error-color: #d1242f;
     --warning-color: #fb8500;
     --neutral-color: #6e7781;
-    --muted-text: #0e7c7c;
+    --muted-text: #2B5A8C;
 }
 
 /* Screen reader only */
@@ -298,55 +298,6 @@ a:hover {
 
 .pagination-info {
     color: var(--text-color);
-}
-
-.css-selector {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-}
-
-.css-selector > div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.css-selector label {
-    color: var(--text-color);
-    font-size: 13px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.css-selector select {
-    padding: 6px 12px;
-    border: 1px solid var(--interactive-color);
-    border-radius: 6px;
-    background: var(--card-bg);
-    color: var(--text-color);
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 100px;
-}
-
-.css-selector select:hover {
-    border-color: var(--accent-color);
-    box-shadow: 0 1px 3px rgba(222, 113, 25, 0.2);
-}
-
-.css-selector select:focus:not(:focus-visible) {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(222, 113, 25, 0.1);
-}
-
-.css-selector select:focus-visible {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
-    border-color: var(--accent-color);
 }
 
 /* PR specific styles */

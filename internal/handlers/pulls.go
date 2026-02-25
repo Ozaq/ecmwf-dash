@@ -29,8 +29,6 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		order = "desc"
 	}
 
-	cssFiles := h.cssFiles
-
 	// Sort PRs
 	sortPullRequests(prs, sortBy, order)
 
@@ -59,8 +57,6 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		Sort         string
 		Order        string
 		NextOrder    string
-		CSSFile      string
-		CSSFiles     []CSSOption
 	}{
 		PageID:       "pulls",
 		Organization: h.organization,
@@ -73,8 +69,6 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		Sort:         sortBy,
 		Order:        order,
 		NextOrder:    getNextOrder(order),
-		CSSFile:      h.cssFile,
-		CSSFiles:     cssFiles,
 	}
 
 	renderTemplate(w, h.prTemplate, "base", data)

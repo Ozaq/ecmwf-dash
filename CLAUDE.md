@@ -18,9 +18,6 @@ make build
 # Run (requires GITHUB_TOKEN env var and config.yaml)
 GITHUB_TOKEN=<token> ./ecmwf-dash
 
-# Run with custom CSS theme (must be auto.css, light.css, or dark.css)
-./ecmwf-dash -css dark.css
-
 # Run tests
 make test
 
@@ -52,14 +49,14 @@ Note: `config.yaml` is NOT baked into the Docker image. Mount it at runtime. The
 - `internal/config/` — Loads and validates `config.yaml` (repos, branches, fetch intervals, server settings)
 - `internal/github/` — GitHub API client wrapper. `types.go` defines all data models + `isInternal()`. `review.go` contains `DeriveReviewStatus()` (extracted, testable). `helpers.go` has `sanitizeLabelColor()`, `computeTextColor()`, and `computeLabelStyle()` for safe label rendering. Separate files for issues, pulls, and actions fetching. Rate info returned from fetch functions (no extra API calls).
 - `internal/storage/` — `Store` interface + `Memory` implementation. Thread-safe with deep-copy on both reads and writes. `LastFetchTimes()` on the Store interface for the health endpoint.
-- `internal/handlers/` — HTTP handlers for three views: `/builds`, `/pulls`, `/issues`. Theme allowlist (`themeFiles()`) returns only `auto.css`, `light.css`, `dark.css` as `CSSOption` structs. `render.go` provides buffered template execution.
+- `internal/handlers/` — HTTP handlers for three views: `/builds`, `/pulls`, `/issues`. `render.go` provides buffered template execution.
 - `internal/fetcher/` — Orchestrates background polling goroutines with context cancellation. No redundant timestamp tracking (uses `Store.LastFetchTimes()`).
 
 **Frontend**: Server-rendered Go templates in `web/templates/`, static assets in `web/static/`.
 
-**Template structure**: Uses Go template inheritance via `base.html` which defines the shared `<head>`, anti-flicker theme script (with CSP sha256 hash), nav, header, and footer. Page templates (`builds.html`, `dashboard.html`, `pullrequests.html`) define `title`, `stats`, `extra-css`, and `content` blocks. All pages use `renderTemplate()` for buffered output.
+**Template structure**: Uses Go template inheritance via `base.html` which defines the shared `<head>`, nav, header, and footer. Page templates (`builds.html`, `dashboard.html`, `pullrequests.html`) define `title`, `stats`, `extra-css`, and `content` blocks. All pages use `renderTemplate()` for buffered output.
 
-**CSS architecture**: `base.css` contains all structural rules using CSS custom properties. Theme files (`auto.css`, `light.css`, `dark.css`) are ~20 lines each, overriding `:root` variables only. `builds.css` holds build-page-specific styles (no fallback values — relies on base.css defaults). Theme switching uses `id="theme-link"` lookup with regex validation.
+**CSS architecture**: Single ECMWF blue palette defined in `base.css` `:root` using CSS custom properties. No theme switching — one light theme only. `builds.css` holds build-page-specific styles (no fallback values — relies on base.css defaults).
 
 **Label rendering**: Labels use `template.CSS` for safe inline styles. `computeLabelStyle()` produces `background-color` + WCAG-compliant text color. The `LabelStyle` field on `Label` struct is pre-computed during API fetch.
 
@@ -71,6 +68,7 @@ Note: `config.yaml` is NOT baked into the Docker image. Mount it at runtime. The
 |------|---------|-------------|
 | `/` | redirect | Redirects to `/builds` |
 | `/builds` | BuildStatus | CI check status per repo/branch |
+| `/builds-dashboard` | BuildsDashboard | TV/kiosk mode for builds (standalone, no base.html) |
 | `/pulls` | PullRequests | Open PRs with reviews and checks |
 | `/issues` | Dashboard | Open issues across repos |
 | `/health` | inline | JSON health check with last-fetch timestamps |
@@ -103,8 +101,8 @@ server:
 - **GitHub API rate limits**: 12 repos x 2 branches = frequent polling. Rate limit warnings appear in logs when remaining < 100.
 - **`CONTRIBUTOR` is treated as external**: `isInternal` only matches `OWNER`, `MEMBER`, or `COLLABORATOR`. Past contributors with merged PRs who aren't collaborators get the "external" badge.
 - **Templates parsed at startup**: No hot reload. Editing a `.html` file requires a restart. Templates validated as non-nil in handler constructor (panics on nil).
-- **CSP hash must match inline script**: If you change the anti-flicker `<script>` in `base.html`, you must recompute the SHA-256 hash and update the CSP header in `cmd/server/main.go`.
-- **`-css` flag validated at startup**: Only `auto.css`, `light.css`, `dark.css` are accepted.
+- **Handler data uses anonymous structs**: Each handler defines its template data as an inline `struct{...}` literal — no shared type. Adding/removing a template field requires updating each handler separately.
+- **No inline scripts**: CSP uses `script-src 'self'` only. All JS is in external files.
 - **DISMISSED reviews**: A DISMISSED review removes the reviewer from the review map, reverting to their previous state (or removing them entirely).
 - **Healthcheck hardcodes port 8000**: `cmd/healthcheck/main.go` always hits `localhost:8000`. Changing the port in `config.yaml` without updating the healthcheck binary will cause Docker health checks to fail.
 - **Fetchers use partial failure tolerance**: Per-repo errors are logged and skipped; an error is returned only if ALL repos fail. If one repo 404s, the others still update. This means stale data can silently persist for a single broken repo.
@@ -114,6 +112,7 @@ server:
 ## Environment
 
 - `GITHUB_TOKEN` (required) — GitHub personal access token for API access
+- No CLI flags — all configuration is via `config.yaml` and environment variables
 - `config.yaml` is gitignored — must be created locally or mounted at runtime
 - CI/CD: `.github/workflows/release.yml` runs tests then builds and pushes Docker image to Harbor on GitHub release (tagged with both the release version and `latest`)
 - `.github/workflows/ci.yml` runs tests with `-race`, vet, `govulncheck`, and a Docker build (no push) on push/PR

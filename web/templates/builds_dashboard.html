@@ -54,19 +54,6 @@
     <link rel="stylesheet" href="/static/base.css">
     <link rel="stylesheet" href="/static/builds.css">
     <link rel="stylesheet" href="/static/tv.css">
-    <link rel="stylesheet" href="/static/{{.CSSFile}}">
-    <script>
-        (function() {
-            var css = localStorage.getItem('preferredCSS');
-            if (css && /^[\w.-]+\.css$/.test(css)) {
-                var link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.id = 'theme-link';
-                link.href = '/static/' + css;
-                document.head.appendChild(link);
-            }
-        })();
-    </script>
 </head>
 <body>
     <div class="tv-container">

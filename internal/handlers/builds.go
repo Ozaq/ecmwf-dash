@@ -110,16 +110,12 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		Version      string
 		Repositories []*RepositoryStatus
 		LastUpdate   time.Time
-		CSSFile      string
-		CSSFiles     []CSSOption
 	}{
 		PageID:       "builds",
 		Organization: h.organization,
 		Version:      h.version,
 		Repositories: repositories,
 		LastUpdate:   lastUpdate,
-		CSSFile:      h.cssFile,
-		CSSFiles:     h.cssFiles,
 	}
 
 	renderTemplate(w, h.buildTemplate, "base", data)
@@ -151,12 +147,10 @@ func (h *Handler) BuildsDashboard(w http.ResponseWriter, r *http.Request) {
 		Organization string
 		Repositories []*RepositoryStatus
 		LastUpdate   time.Time
-		CSSFile      string
 	}{
 		Organization: h.organization,
 		Repositories: repositories,
 		LastUpdate:   lastUpdate,
-		CSSFile:      h.cssFile,
 	}
 
 	renderTemplate(w, h.dashboardTemplate, "builds_dashboard.html", data)
