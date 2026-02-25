@@ -102,11 +102,6 @@ body {
 }
 
 .issues-table {
-    background: var(--card-bg);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border-color);
     overflow-x: auto;
 }
 
@@ -143,12 +138,14 @@ table {
 }
 
 th {
-    background: var(--bg-color);
-    padding: 12px;
+    padding: 10px 12px;
     text-align: left;
     font-weight: 600;
-    border-bottom: 2px solid var(--interactive-color);
-    color: var(--text-color);
+    border-bottom: var(--divider);
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-size: 13px;
 }
 
 th a {
@@ -173,7 +170,7 @@ th a:hover {
 }
 
 td {
-    padding: 12px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border-color);
     vertical-align: top;
 }
@@ -265,12 +262,8 @@ a:hover {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    padding: 20px;
-    background: var(--card-bg);
-    margin-top: 20px;
-    border-radius: 8px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border-color);
+    padding: 16px 0;
+    border-top: var(--divider);
     flex-wrap: wrap;
 }
 
@@ -428,22 +421,26 @@ a:hover {
 .checks-matrix {
     display: flex;
     flex-wrap: wrap;
-    gap: 3px;
+    gap: 2px;
     max-width: 180px;
 }
 
 .check-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
     display: block;
-    transition: transform 0.1s;
+    transition: transform 0.1s, opacity 0.1s;
     position: relative;
+    opacity: 0.7;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .check-dot:hover {
-    transform: scale(1.2);
-    z-index: 1;
+    transform: scale(2);
+    opacity: 1;
+    z-index: 10;
 }
 
 .check-dot:hover::after {
@@ -451,12 +448,12 @@ a:hover {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 125%;
+    bottom: calc(100% + 6px);
     background-color: var(--text-color);
     color: var(--card-bg);
-    padding: 6px 8px;
-    border-radius: 4px;
-    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    font-size: 11px;
     white-space: nowrap;
     pointer-events: none;
     z-index: 9999;
@@ -467,8 +464,8 @@ a:hover {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 115%;
-    border-width: 6px;
+    bottom: calc(100% + 2px);
+    border-width: 4px;
     border-style: solid;
     border-color: var(--text-color) transparent transparent transparent;
     z-index: 9999;
@@ -497,12 +494,8 @@ a:hover {
 
 /* Empty and error states */
 .empty-state {
-    background: var(--card-bg);
-    border-radius: 8px;
     padding: 40px 20px;
     text-align: center;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border-color);
     margin-top: 20px;
 }
 
@@ -584,11 +577,9 @@ a:hover {
     }
 
     .issues-table tr {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        margin-bottom: 10px;
-        padding: 10px;
+        border-bottom: var(--divider);
+        margin-bottom: 0;
+        padding: 10px 0;
     }
 
     .issues-table td {

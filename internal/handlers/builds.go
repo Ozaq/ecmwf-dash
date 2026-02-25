@@ -28,13 +28,32 @@ type BranchStatus struct {
 	StatusClass   string
 }
 
-func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
-	branchChecks, lastUpdate := h.storage.GetBranchChecks()
-	log.Printf("Serving /builds - Branch checks: %d", len(branchChecks))
+// sortByConfigOrder sorts repositories to match config.yaml order.
+// Unknown repos sort to end, alphabetical among themselves.
+func sortByConfigOrder(repos []*RepositoryStatus, repoNames []string) {
+	repoIndex := make(map[string]int, len(repoNames))
+	for i, name := range repoNames {
+		repoIndex[name] = i
+	}
+	sentinel := len(repoNames)
+	sort.Slice(repos, func(i, j int) bool {
+		idxI, okI := repoIndex[repos[i].Name]
+		idxJ, okJ := repoIndex[repos[j].Name]
+		if !okI {
+			idxI = sentinel
+		}
+		if !okJ {
+			idxJ = sentinel
+		}
+		if idxI != idxJ {
+			return idxI < idxJ
+		}
+		return repos[i].Name < repos[j].Name
+	})
+}
 
-	cssFiles := h.cssFiles
-
-	// Group checks by repository and branch
+// groupByRepository groups branch checks into sorted repository statuses.
+func groupByRepository(branchChecks []github.BranchCheck, repoNames []string) []*RepositoryStatus {
 	repoMap := make(map[string]*RepositoryStatus)
 
 	for _, branchCheck := range branchChecks {
@@ -54,7 +73,6 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 
 		repo := repoMap[branchCheck.Repository]
 
-		// Determine if this is main/master or develop
 		if isMainBranch(branchCheck.Branch) {
 			repo.MainBranch.Checks = branchCheck.Checks
 			repo.MainBranch.HasChecks = len(branchCheck.Checks) > 0
@@ -70,16 +88,21 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Convert map to slice for template
 	var repositories []*RepositoryStatus
 	for _, repo := range repoMap {
 		repositories = append(repositories, repo)
 	}
 
-	// Sort repositories by name
-	sort.Slice(repositories, func(i, j int) bool {
-		return repositories[i].Name < repositories[j].Name
-	})
+	sortByConfigOrder(repositories, repoNames)
+
+	return repositories
+}
+
+func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
+	branchChecks, lastUpdate := h.storage.GetBranchChecks()
+	log.Printf("Serving /builds - Branch checks: %d", len(branchChecks))
+
+	repositories := groupByRepository(branchChecks, h.repoNames)
 
 	data := struct {
 		PageID       string
@@ -96,10 +119,47 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		Repositories: repositories,
 		LastUpdate:   lastUpdate,
 		CSSFile:      h.cssFile,
-		CSSFiles:     cssFiles,
+		CSSFiles:     h.cssFiles,
 	}
 
 	renderTemplate(w, h.buildTemplate, "base", data)
+}
+
+func (h *Handler) BuildsDashboard(w http.ResponseWriter, r *http.Request) {
+	branchChecks, lastUpdate := h.storage.GetBranchChecks()
+	log.Printf("Serving /builds-dashboard - Branch checks: %d", len(branchChecks))
+
+	repositories := groupByRepository(branchChecks, h.repoNames)
+
+	// Ensure all configured repos appear, even without data
+	repoSet := make(map[string]bool, len(repositories))
+	for _, repo := range repositories {
+		repoSet[repo.Name] = true
+	}
+	for _, name := range h.repoNames {
+		if !repoSet[name] {
+			repositories = append(repositories, &RepositoryStatus{
+				Name:          name,
+				MainBranch:    BranchStatus{Branch: "master", Checks: []github.Check{}},
+				DevelopBranch: BranchStatus{Branch: "develop", Checks: []github.Check{}},
+			})
+		}
+	}
+	sortByConfigOrder(repositories, h.repoNames)
+
+	data := struct {
+		Organization string
+		Repositories []*RepositoryStatus
+		LastUpdate   time.Time
+		CSSFile      string
+	}{
+		Organization: h.organization,
+		Repositories: repositories,
+		LastUpdate:   lastUpdate,
+		CSSFile:      h.cssFile,
+	}
+
+	renderTemplate(w, h.dashboardTemplate, "builds_dashboard.html", data)
 }
 
 func computeBranchCounts(bs *BranchStatus) {
