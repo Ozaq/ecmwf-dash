@@ -21,35 +21,8 @@
         localStorage.setItem('preferredCSS', newCSS);
     }
 
-    // Refresh functionality
-    var dropdown = document.getElementById('refresh-select');
-    if (dropdown) {
-        var saved = localStorage.getItem('refresh-interval');
-        if (!saved) {
-            saved = '300000';
-            localStorage.setItem('refresh-interval', saved);
-        }
-        dropdown.value = saved;
-
-        var timer = null;
-
-        function setRefresh(interval) {
-            if (timer) clearInterval(timer);
-            if (interval > 0) {
-                timer = setInterval(function() {
-                    window.location.reload();
-                }, interval);
-            }
-        }
-
-        dropdown.addEventListener('change', function() {
-            var interval = parseInt(dropdown.value, 10);
-            localStorage.setItem('refresh-interval', dropdown.value);
-            setRefresh(interval);
-        });
-
-        setRefresh(parseInt(dropdown.value, 10));
-    }
+    // Auto-refresh every 60s (all pages)
+    setInterval(function() { window.location.reload(); }, 60000);
 
     // Theme dropdown init + event listener (replaces inline onchange)
     document.addEventListener('DOMContentLoaded', function() {
