@@ -20,14 +20,8 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	sortBy := r.URL.Query().Get("sort")
-	if sortBy == "" {
-		sortBy = "updated"
-	}
-	order := r.URL.Query().Get("order")
-	if order == "" {
-		order = "desc"
-	}
+	sortBy := sanitizeSort(r.URL.Query().Get("sort"))
+	order := sanitizeOrder(r.URL.Query().Get("order"))
 
 	// Sort PRs
 	sortPullRequests(prs, sortBy, order)
@@ -111,7 +105,7 @@ func sortPullRequests(prs []github.PullRequest, sortBy, order string) {
 			}
 			return prs[i].CreatedAt.After(prs[j].CreatedAt)
 		})
-	default: // "updated"
+	case "updated":
 		sort.Slice(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].UpdatedAt.Before(prs[j].UpdatedAt)

@@ -60,14 +60,8 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	sortBy := r.URL.Query().Get("sort")
-	if sortBy == "" {
-		sortBy = "updated"
-	}
-	order := r.URL.Query().Get("order")
-	if order == "" {
-		order = "desc"
-	}
+	sortBy := sanitizeSort(r.URL.Query().Get("sort"))
+	order := sanitizeOrder(r.URL.Query().Get("order"))
 
 	// Sort issues
 	sortIssues(issues, sortBy, order)
@@ -151,7 +145,7 @@ func sortIssues(issues []github.Issue, sortBy, order string) {
 			}
 			return issues[i].CreatedAt.After(issues[j].CreatedAt)
 		})
-	default: // "updated"
+	case "updated":
 		sort.Slice(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].UpdatedAt.Before(issues[j].UpdatedAt)
