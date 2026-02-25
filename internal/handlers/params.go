@@ -1,5 +1,7 @@
 package handlers
 
+const itemsPerPage = 100
+
 var validSortFields = map[string]bool{
 	"repo":    true,
 	"number":  true,
@@ -21,4 +23,29 @@ func sanitizeOrder(order string) string {
 		return order
 	}
 	return "desc"
+}
+
+func getNextOrder(current string) string {
+	if current == "asc" {
+		return "desc"
+	}
+	return "asc"
+}
+
+// paginate returns clamped start/end indices and total page count for the
+// given total item count, 1-based page number, and page size.
+func paginate(total, page, pageSize int) (start, end, totalPages int) {
+	if total <= 0 || pageSize <= 0 {
+		return 0, 0, 0
+	}
+	totalPages = (total + pageSize - 1) / pageSize
+	start = (page - 1) * pageSize
+	if start > total {
+		start = total
+	}
+	end = start + pageSize
+	if end > total {
+		end = total
+	}
+	return start, end, totalPages
 }

@@ -27,13 +27,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 	sortPullRequests(prs, sortBy, order)
 
 	// Paginate
-	totalPages := (len(prs) + issuesPerPage - 1) / issuesPerPage
-	start := (page - 1) * issuesPerPage
-	end := start + issuesPerPage
-	if end > len(prs) {
-		end = len(prs)
-	}
-
+	start, end, totalPages := paginate(len(prs), page, itemsPerPage)
 	var pagePRs []github.PullRequest
 	if start < len(prs) {
 		pagePRs = prs[start:end]

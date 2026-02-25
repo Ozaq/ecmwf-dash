@@ -12,8 +12,6 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
-const issuesPerPage = 100
-
 type Handler struct {
 	storage           storage.Store
 	template          *template.Template
@@ -67,13 +65,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	sortIssues(issues, sortBy, order)
 
 	// Paginate
-	totalPages := (len(issues) + issuesPerPage - 1) / issuesPerPage
-	start := (page - 1) * issuesPerPage
-	end := start + issuesPerPage
-	if end > len(issues) {
-		end = len(issues)
-	}
-
+	start, end, totalPages := paginate(len(issues), page, itemsPerPage)
 	var pageIssues []github.Issue
 	if start < len(issues) {
 		pageIssues = issues[start:end]
@@ -153,11 +145,4 @@ func sortIssues(issues []github.Issue, sortBy, order string) {
 			return issues[i].UpdatedAt.After(issues[j].UpdatedAt)
 		})
 	}
-}
-
-func getNextOrder(current string) string {
-	if current == "asc" {
-		return "desc"
-	}
-	return "asc"
 }
