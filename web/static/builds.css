@@ -259,6 +259,12 @@
 .detail-indicator.status-failure { background: var(--error-color); }
 .detail-indicator.status-running { background: var(--warning-color); }
 
+/* ===== Stale row ===== */
+.build-row.stale-row {
+    opacity: 0.75;
+    border-left: 3px solid var(--warning-color);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .build-row-header {

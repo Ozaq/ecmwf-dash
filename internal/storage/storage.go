@@ -16,4 +16,13 @@ type Store interface {
 	SetBranchChecks([]github.BranchCheck)
 	GetBranchChecks() ([]github.BranchCheck, time.Time)
 	LastFetchTimes() (issues, prs, checks time.Time)
+
+	// Merge methods preserve old data for failed repos, replacing only successful ones.
+	// succeededRepos lists repos that were fetched successfully (may have 0 items).
+	MergeIssues(issues []github.Issue, failedRepos, succeededRepos []string)
+	MergePullRequests(prs []github.PullRequest, failedRepos, succeededRepos []string)
+	MergeBranchChecks(checks []github.BranchCheck, failedRepos, succeededRepos []string)
+
+	// RepoFetchTimes returns per-repo last-success timestamps for a category ("issues"|"prs"|"checks").
+	RepoFetchTimes(category string) map[string]time.Time
 }

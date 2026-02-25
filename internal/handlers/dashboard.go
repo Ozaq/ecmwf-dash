@@ -21,9 +21,10 @@ type Handler struct {
 	organization      string
 	version           string
 	repoNames         []string
+	fetchIntervals    FetchIntervals
 }
 
-func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, org string, version string, repoNames []string) *Handler {
+func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, org string, version string, repoNames []string, intervals FetchIntervals) *Handler {
 	if issuesTmpl == nil {
 		panic("issuesTmpl must not be nil")
 	}
@@ -45,6 +46,7 @@ func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.T
 		organization:      org,
 		version:           version,
 		repoNames:         repoNames,
+		fetchIntervals:    intervals,
 	}
 }
 
@@ -71,30 +73,47 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		pageIssues = issues[start:end]
 	}
 
+	// Compute staleness (skip on cold start)
+	var staleMap map[string]bool
+	var staleList []string
+	if !lastUpdate.IsZero() {
+		repoTimes := h.storage.RepoFetchTimes("issues")
+		threshold := h.fetchIntervals.Issues * 3
+		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
+		staleList = sortedKeys(staleMap)
+	}
+	if staleMap == nil {
+		staleMap = make(map[string]bool)
+	}
+
 	data := struct {
-		PageID       string
-		Organization string
-		Version      string
-		Issues       []github.Issue
-		LastUpdate   time.Time
-		CurrentPage  int
-		TotalPages   int
-		TotalIssues  int
-		Sort         string
-		Order        string
-		NextOrder    string
+		PageID        string
+		Organization  string
+		Version       string
+		Issues        []github.Issue
+		LastUpdate    time.Time
+		CurrentPage   int
+		TotalPages    int
+		TotalIssues   int
+		Sort          string
+		Order         string
+		NextOrder     string
+		StaleRepos    map[string]bool
+		StaleRepoList []string
 	}{
-		PageID:       "issues",
-		Organization: h.organization,
-		Version:      h.version,
-		Issues:       pageIssues,
-		LastUpdate:   lastUpdate,
-		CurrentPage:  page,
-		TotalPages:   totalPages,
-		TotalIssues:  len(issues),
-		Sort:         sortBy,
-		Order:        order,
-		NextOrder:    getNextOrder(order),
+		PageID:        "issues",
+		Organization:  h.organization,
+		Version:       h.version,
+		Issues:        pageIssues,
+		LastUpdate:    lastUpdate,
+		CurrentPage:   page,
+		TotalPages:    totalPages,
+		TotalIssues:   len(issues),
+		Sort:          sortBy,
+		Order:         order,
+		NextOrder:     getNextOrder(order),
+		StaleRepos:    staleMap,
+		StaleRepoList: staleList,
 	}
 
 	renderTemplate(w, h.template, "base", data)

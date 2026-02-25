@@ -46,7 +46,7 @@
 <div class="build-list">
     {{range .Repositories}}
     {{$hasDetails := or (gt .MainBranch.FailureCount 0) (gt .MainBranch.RunningCount 0) (gt .DevelopBranch.FailureCount 0) (gt .DevelopBranch.RunningCount 0)}}
-    <div class="build-row {{if $hasDetails}}has-details{{end}}" {{if $hasDetails}}role="button" tabindex="0" aria-expanded="false"{{end}}>
+    <div class="build-row {{if $hasDetails}}has-details{{end}}{{if .Stale}} stale-row{{end}}" {{if $hasDetails}}role="button" tabindex="0" aria-expanded="false"{{end}}>
         <div class="build-row-header">
             <a class="build-repo" href="https://github.com/{{$.Organization}}/{{.Name}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
             <div class="build-lanes">

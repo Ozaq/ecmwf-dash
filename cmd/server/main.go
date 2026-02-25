@@ -110,7 +110,12 @@ func main() {
 	}
 
 	// Create handler
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, cfg.GitHub.Organization, Version, repoNames)
+	intervals := handlers.FetchIntervals{
+		Issues:       cfg.FetchIntervals.Issues,
+		PullRequests: cfg.FetchIntervals.PullRequests,
+		Actions:      cfg.FetchIntervals.Actions,
+	}
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, cfg.GitHub.Organization, Version, repoNames, intervals)
 
 	// Setup routes
 	mux := http.NewServeMux()
@@ -130,6 +135,11 @@ func main() {
 				"issues": issueTs,
 				"pulls":  prTs,
 				"checks": checksTs,
+			},
+			"repo_fetch_times": map[string]any{
+				"issues": store.RepoFetchTimes("issues"),
+				"pulls":  store.RepoFetchTimes("prs"),
+				"checks": store.RepoFetchTimes("checks"),
 			},
 		}); err != nil {
 			log.Printf("Error encoding health response: %v", err)

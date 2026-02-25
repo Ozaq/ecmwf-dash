@@ -13,6 +13,7 @@ type RepositoryStatus struct {
 	Name          string
 	MainBranch    BranchStatus
 	DevelopBranch BranchStatus
+	Stale         bool
 }
 
 type BranchStatus struct {
@@ -104,18 +105,38 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 
 	repositories := groupByRepository(branchChecks, h.repoNames)
 
+	// Compute staleness (skip on cold start)
+	var staleMap map[string]bool
+	var staleList []string
+	if !lastUpdate.IsZero() {
+		repoTimes := h.storage.RepoFetchTimes("checks")
+		threshold := h.fetchIntervals.Actions * 3
+		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
+		staleList = sortedKeys(staleMap)
+	}
+	if staleMap == nil {
+		staleMap = make(map[string]bool)
+	}
+	for _, repo := range repositories {
+		repo.Stale = staleMap[repo.Name]
+	}
+
 	data := struct {
-		PageID       string
-		Organization string
-		Version      string
-		Repositories []*RepositoryStatus
-		LastUpdate   time.Time
+		PageID        string
+		Organization  string
+		Version       string
+		Repositories  []*RepositoryStatus
+		LastUpdate    time.Time
+		StaleRepos    map[string]bool
+		StaleRepoList []string
 	}{
-		PageID:       "builds",
-		Organization: h.organization,
-		Version:      h.version,
-		Repositories: repositories,
-		LastUpdate:   lastUpdate,
+		PageID:        "builds",
+		Organization:  h.organization,
+		Version:       h.version,
+		Repositories:  repositories,
+		LastUpdate:    lastUpdate,
+		StaleRepos:    staleMap,
+		StaleRepoList: staleList,
 	}
 
 	renderTemplate(w, h.buildTemplate, "base", data)
@@ -143,14 +164,34 @@ func (h *Handler) BuildsDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	sortByConfigOrder(repositories, h.repoNames)
 
+	// Compute staleness (skip on cold start)
+	var staleMap map[string]bool
+	var staleList []string
+	if !lastUpdate.IsZero() {
+		repoTimes := h.storage.RepoFetchTimes("checks")
+		threshold := h.fetchIntervals.Actions * 3
+		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
+		staleList = sortedKeys(staleMap)
+	}
+	if staleMap == nil {
+		staleMap = make(map[string]bool)
+	}
+	for _, repo := range repositories {
+		repo.Stale = staleMap[repo.Name]
+	}
+
 	data := struct {
-		Organization string
-		Repositories []*RepositoryStatus
-		LastUpdate   time.Time
+		Organization  string
+		Repositories  []*RepositoryStatus
+		LastUpdate    time.Time
+		StaleRepos    map[string]bool
+		StaleRepoList []string
 	}{
-		Organization: h.organization,
-		Repositories: repositories,
-		LastUpdate:   lastUpdate,
+		Organization:  h.organization,
+		Repositories:  repositories,
+		LastUpdate:    lastUpdate,
+		StaleRepos:    staleMap,
+		StaleRepoList: staleList,
 	}
 
 	renderTemplate(w, h.dashboardTemplate, "builds_dashboard.html", data)

@@ -78,6 +78,32 @@ type BranchCheck struct {
 	Checks     []Check
 }
 
+// Fetch result types — bundle data, failed repos, rate info, and error.
+
+type IssuesFetchResult struct {
+	Issues         []Issue
+	SucceededRepos []string // repos fetched successfully (may have 0 items)
+	FailedRepos    []string
+	Rate           RateInfo
+	Err            error
+}
+
+type PRsFetchResult struct {
+	PullRequests   []PullRequest
+	SucceededRepos []string
+	FailedRepos    []string
+	Rate           RateInfo
+	Err            error
+}
+
+type ChecksFetchResult struct {
+	BranchChecks   []BranchCheck
+	SucceededRepos []string
+	FailedRepos    []string
+	Rate           RateInfo
+	Err            error
+}
+
 func isInternal(association string) bool {
 	return association == "OWNER" || association == "MEMBER" || association == "COLLABORATOR"
 }

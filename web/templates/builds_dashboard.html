@@ -64,6 +64,11 @@
                 <span class="tv-countdown" id="tv-countdown"></span>
             </div>
         </div>
+        {{if .StaleRepoList}}
+        <div class="stale-banner" role="alert">
+            &#9888; Data may be outdated for: {{range $i, $name := .StaleRepoList}}{{if $i}}, {{end}}{{$name}}{{end}}
+        </div>
+        {{end}}
         <main class="tv-main">
             {{if not .Repositories}}
             <div class="empty-state">
@@ -72,7 +77,7 @@
             {{else}}
             <div class="build-cards">
                 {{range .Repositories}}
-                <div class="build-card">
+                <div class="build-card{{if .Stale}} stale-card{{end}}">
                     <div class="card-header">
                         <h3 class="repo-name">{{.Name}}</h3>
                     </div>

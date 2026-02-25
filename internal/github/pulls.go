@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -9,9 +10,8 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []config.RepositoryConfig) ([]PullRequest, RateInfo, error) {
-	var allPRs []PullRequest
-	var lastRate RateInfo
+func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []config.RepositoryConfig) PRsFetchResult {
+	var result PRsFetchResult
 	successCount := 0
 
 	for _, repo := range repos {
@@ -39,7 +39,7 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []conf
 				break
 			}
 			if resp != nil {
-				lastRate = rateFromResponse(resp)
+				result.Rate = rateFromResponse(resp)
 			}
 
 			for _, ghPR := range prs {
@@ -77,12 +77,12 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []conf
 
 				// Fetch additional details
 				rate, err := c.fetchPRDetails(ctx, org, repo.Name, ghPR.GetNumber(), &pr)
-				lastRate = rate
+				result.Rate = rate
 				if err != nil {
 					log.Printf("Error fetching PR details for %s/%s#%d: %v", org, repo.Name, ghPR.GetNumber(), err)
 				}
 
-				allPRs = append(allPRs, pr)
+				result.PullRequests = append(result.PullRequests, pr)
 			}
 
 			if resp.NextPage == 0 {
@@ -91,16 +91,29 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []conf
 			opts.Page = resp.NextPage
 		}
 
-		if !repoFailed {
+		if repoFailed {
+			result.FailedRepos = append(result.FailedRepos, repo.Name)
+		} else {
+			result.SucceededRepos = append(result.SucceededRepos, repo.Name)
 			successCount++
 		}
 	}
 
-	if successCount == 0 && len(repos) > 0 {
-		return allPRs, lastRate, ctx.Err()
+	// Any repos not attempted (due to context cancellation) count as failed
+	attempted := len(result.SucceededRepos) + len(result.FailedRepos)
+	for i := attempted; i < len(repos); i++ {
+		result.FailedRepos = append(result.FailedRepos, repos[i].Name)
 	}
 
-	return allPRs, lastRate, nil
+	if successCount == 0 && len(repos) > 0 {
+		if ctx.Err() != nil {
+			result.Err = ctx.Err()
+		} else {
+			result.Err = fmt.Errorf("all %d repos failed", len(repos))
+		}
+	}
+
+	return result
 }
 
 func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number int, pr *PullRequest) (RateInfo, error) {

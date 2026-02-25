@@ -21,6 +21,12 @@
             </div>
         </header>
 
+        {{if .StaleRepoList}}
+        <div class="stale-banner" role="alert">
+            &#9888; Data may be outdated for: {{range $i, $name := .StaleRepoList}}{{if $i}}, {{end}}{{$name}}{{end}}
+        </div>
+        {{end}}
+
         <main>
             {{template "content" .}}
         </main>

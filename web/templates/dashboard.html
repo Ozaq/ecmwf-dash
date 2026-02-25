@@ -74,7 +74,7 @@
         </thead>
         <tbody>
             {{range .Issues}}
-            <tr>
+            <tr{{if index $.StaleRepos .Repository}} class="stale-row"{{end}}>
                 <td data-label="Repository">{{.Repository}}</td>
                 <td data-label="#" class="issue-number">#{{.Number}}</td>
                 <td data-label="Title">

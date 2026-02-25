@@ -33,30 +33,47 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		pagePRs = prs[start:end]
 	}
 
+	// Compute staleness (skip on cold start)
+	var staleMap map[string]bool
+	var staleList []string
+	if !lastUpdate.IsZero() {
+		repoTimes := h.storage.RepoFetchTimes("prs")
+		threshold := h.fetchIntervals.PullRequests * 3
+		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
+		staleList = sortedKeys(staleMap)
+	}
+	if staleMap == nil {
+		staleMap = make(map[string]bool)
+	}
+
 	data := struct {
-		PageID       string
-		Organization string
-		Version      string
-		PullRequests []github.PullRequest
-		LastUpdate   time.Time
-		CurrentPage  int
-		TotalPages   int
-		TotalPRs     int
-		Sort         string
-		Order        string
-		NextOrder    string
+		PageID        string
+		Organization  string
+		Version       string
+		PullRequests  []github.PullRequest
+		LastUpdate    time.Time
+		CurrentPage   int
+		TotalPages    int
+		TotalPRs      int
+		Sort          string
+		Order         string
+		NextOrder     string
+		StaleRepos    map[string]bool
+		StaleRepoList []string
 	}{
-		PageID:       "pulls",
-		Organization: h.organization,
-		Version:      h.version,
-		PullRequests: pagePRs,
-		LastUpdate:   lastUpdate,
-		CurrentPage:  page,
-		TotalPages:   totalPages,
-		TotalPRs:     len(prs),
-		Sort:         sortBy,
-		Order:        order,
-		NextOrder:    getNextOrder(order),
+		PageID:        "pulls",
+		Organization:  h.organization,
+		Version:       h.version,
+		PullRequests:  pagePRs,
+		LastUpdate:    lastUpdate,
+		CurrentPage:   page,
+		TotalPages:    totalPages,
+		TotalPRs:      len(prs),
+		Sort:          sortBy,
+		Order:         order,
+		NextOrder:     getNextOrder(order),
+		StaleRepos:    staleMap,
+		StaleRepoList: staleList,
 	}
 
 	renderTemplate(w, h.prTemplate, "base", data)

@@ -48,15 +48,18 @@ func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
 func (f *Fetcher) fetchIssues(ctx context.Context) {
 	log.Printf("Fetching issues for %s", f.cfg.GitHub.Organization)
 
-	issues, rate, err := f.gh.FetchIssues(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
-	if err != nil {
-		log.Printf("Error fetching issues: %v", err)
+	result := f.gh.FetchIssues(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	if result.Err != nil {
+		log.Printf("Error fetching issues: %v", result.Err)
 		return
 	}
 
-	f.storage.SetIssues(issues)
-	log.Printf("Fetched %d issues", len(issues))
-	f.gh.LogRate(rate)
+	if len(result.FailedRepos) > 0 {
+		log.Printf("Issues: partial failure for repos: %v", result.FailedRepos)
+	}
+	f.storage.MergeIssues(result.Issues, result.FailedRepos, result.SucceededRepos)
+	log.Printf("Fetched %d issues", len(result.Issues))
+	f.gh.LogRate(result.Rate)
 }
 
 func (f *Fetcher) runPRsFetcher(ctx context.Context) {
@@ -77,15 +80,18 @@ func (f *Fetcher) runPRsFetcher(ctx context.Context) {
 func (f *Fetcher) fetchPullRequests(ctx context.Context) {
 	log.Printf("Fetching pull requests for %s", f.cfg.GitHub.Organization)
 
-	prs, rate, err := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
-	if err != nil {
-		log.Printf("Error fetching pull requests: %v", err)
+	result := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	if result.Err != nil {
+		log.Printf("Error fetching pull requests: %v", result.Err)
 		return
 	}
 
-	f.storage.SetPullRequests(prs)
-	log.Printf("Fetched %d pull requests", len(prs))
-	f.gh.LogRate(rate)
+	if len(result.FailedRepos) > 0 {
+		log.Printf("Pull requests: partial failure for repos: %v", result.FailedRepos)
+	}
+	f.storage.MergePullRequests(result.PullRequests, result.FailedRepos, result.SucceededRepos)
+	log.Printf("Fetched %d pull requests", len(result.PullRequests))
+	f.gh.LogRate(result.Rate)
 }
 
 func (f *Fetcher) runBranchChecksFetcher(ctx context.Context) {
@@ -106,13 +112,16 @@ func (f *Fetcher) runBranchChecksFetcher(ctx context.Context) {
 func (f *Fetcher) fetchBranchChecks(ctx context.Context) {
 	log.Printf("Fetching branch checks for %s", f.cfg.GitHub.Organization)
 
-	checks, rate, err := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
-	if err != nil {
-		log.Printf("Error fetching branch checks: %v", err)
+	result := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	if result.Err != nil {
+		log.Printf("Error fetching branch checks: %v", result.Err)
 		return
 	}
 
-	f.storage.SetBranchChecks(checks)
-	log.Printf("Fetched %d branch checks", len(checks))
-	f.gh.LogRate(rate)
+	if len(result.FailedRepos) > 0 {
+		log.Printf("Branch checks: partial failure for repos: %v", result.FailedRepos)
+	}
+	f.storage.MergeBranchChecks(result.BranchChecks, result.FailedRepos, result.SucceededRepos)
+	log.Printf("Fetched %d branch checks", len(result.BranchChecks))
+	f.gh.LogRate(result.Rate)
 }

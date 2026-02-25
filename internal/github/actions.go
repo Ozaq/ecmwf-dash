@@ -9,9 +9,8 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []config.RepositoryConfig) ([]BranchCheck, RateInfo, error) {
-	var allChecks []BranchCheck
-	var lastRate RateInfo
+func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []config.RepositoryConfig) ChecksFetchResult {
+	var result ChecksFetchResult
 	successCount := 0
 
 	for _, repo := range repos {
@@ -19,6 +18,7 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []conf
 			break
 		}
 
+		repoFailed := true
 		for _, branch := range repo.Branches {
 			if ctx.Err() != nil {
 				break
@@ -34,7 +34,7 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []conf
 				continue
 			}
 			if resp != nil {
-				lastRate = rateFromResponse(resp)
+				result.Rate = rateFromResponse(resp)
 			}
 
 			if len(commits) == 0 {
@@ -61,7 +61,7 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []conf
 					break
 				}
 				if resp != nil {
-					lastRate = rateFromResponse(resp)
+					result.Rate = rateFromResponse(resp)
 				}
 				allCheckRuns = append(allCheckRuns, checkRuns.CheckRuns...)
 				if resp.NextPage == 0 {
@@ -93,14 +93,31 @@ func (c *Client) FetchBranchChecks(ctx context.Context, org string, repos []conf
 				Checks:     checks,
 			}
 
-			allChecks = append(allChecks, branchCheck)
+			result.BranchChecks = append(result.BranchChecks, branchCheck)
 			successCount++
+			repoFailed = false
+		}
+
+		if repoFailed {
+			result.FailedRepos = append(result.FailedRepos, repo.Name)
+		} else {
+			result.SucceededRepos = append(result.SucceededRepos, repo.Name)
 		}
 	}
 
-	if successCount == 0 && len(repos) > 0 {
-		return allChecks, lastRate, fmt.Errorf("all branch check fetches failed")
+	// Any repos not attempted (due to context cancellation) count as failed
+	attempted := len(result.SucceededRepos) + len(result.FailedRepos)
+	for i := attempted; i < len(repos); i++ {
+		result.FailedRepos = append(result.FailedRepos, repos[i].Name)
 	}
 
-	return allChecks, lastRate, nil
+	if successCount == 0 && len(repos) > 0 {
+		if ctx.Err() != nil {
+			result.Err = ctx.Err()
+		} else {
+			result.Err = fmt.Errorf("all branch check fetches failed")
+		}
+	}
+
+	return result
 }

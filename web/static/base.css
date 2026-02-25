@@ -443,6 +443,25 @@ a:hover {
 .check-count.failure { color: var(--error-color); }
 .check-count.running { color: var(--warning-color); }
 
+/* Stale data indicators */
+.stale-banner {
+    background: color-mix(in srgb, var(--warning-color) 12%, var(--card-bg));
+    border: 1px solid var(--warning-color);
+    border-radius: 6px;
+    padding: 8px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.stale-row {
+    opacity: 0.75;
+}
+
+tr.stale-row td:first-child {
+    border-left: 3px solid var(--warning-color);
+}
+
 /* Empty and error states */
 .empty-state {
     padding: 40px 20px;

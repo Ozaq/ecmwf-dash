@@ -70,7 +70,7 @@
         </thead>
         <tbody>
             {{range .PullRequests}}
-            <tr>
+            <tr{{if index $.StaleRepos .Repository}} class="stale-row"{{end}}>
                 <td data-label="Repository">{{.Repository}} <span class="issue-number">#{{.Number}}</span></td>
                 <td data-label="Title" title="{{.Comments}} comments, {{.ReviewComments}} review comments">
                     <div class="pr-title-text">
