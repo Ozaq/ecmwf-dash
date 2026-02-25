@@ -2,27 +2,43 @@ package github
 
 import (
 	"context"
-	"fmt"
+	"log"
 
-	"github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v66/github"
 	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchIssues(ctx context.Context, org string, repos []config.RepositoryConfig) ([]Issue, error) {
+func (c *Client) FetchIssues(ctx context.Context, org string, repos []config.RepositoryConfig) ([]Issue, RateInfo, error) {
 	var allIssues []Issue
+	var lastRate RateInfo
+	successCount := 0
 
 	for _, repo := range repos {
-		opts := &github.IssueListByRepoOptions{
+		if ctx.Err() != nil {
+			break
+		}
+
+		opts := &gh.IssueListByRepoOptions{
 			State: "open",
-			ListOptions: github.ListOptions{
+			ListOptions: gh.ListOptions{
 				PerPage: 100,
 			},
 		}
 
+		repoFailed := false
 		for {
+			if ctx.Err() != nil {
+				break
+			}
+
 			issues, resp, err := c.gh.Issues.ListByRepo(ctx, org, repo.Name, opts)
 			if err != nil {
-				return nil, fmt.Errorf("fetching issues for %s/%s: %w", org, repo, err)
+				log.Printf("Error fetching issues for %s/%s: %v", org, repo.Name, err)
+				repoFailed = true
+				break
+			}
+			if resp != nil {
+				lastRate = rateFromResponse(resp)
 			}
 
 			for _, ghIssue := range issues {
@@ -50,9 +66,11 @@ func (c *Client) FetchIssues(ctx context.Context, org string, repos []config.Rep
 
 				// Convert labels
 				for _, label := range ghIssue.Labels {
+					color := sanitizeLabelColor(label.GetColor())
 					issue.Labels = append(issue.Labels, Label{
-						Name:  label.GetName(),
-						Color: label.GetColor(),
+						Name:       label.GetName(),
+						Color:      color,
+						LabelStyle: computeLabelStyle(color),
 					})
 				}
 
@@ -64,11 +82,15 @@ func (c *Client) FetchIssues(ctx context.Context, org string, repos []config.Rep
 			}
 			opts.Page = resp.NextPage
 		}
+
+		if !repoFailed {
+			successCount++
+		}
 	}
 
-	return allIssues, nil
-}
+	if successCount == 0 && len(repos) > 0 {
+		return allIssues, lastRate, ctx.Err()
+	}
 
-func isInternal(association string) bool {
-	return association == "OWNER" || association == "MEMBER" || association == "COLLABORATOR"
+	return allIssues, lastRate, nil
 }

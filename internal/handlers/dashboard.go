@@ -4,33 +4,50 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ozaq/ecmwf-dash/internal/github"
 	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
+// CSSOption represents a theme file entry for the dropdown.
+type CSSOption struct {
+	Value       string // filename, e.g. "auto.css"
+	DisplayName string // display text, e.g. "Auto"
+}
+
 const issuesPerPage = 100
 
 type Handler struct {
-	storage       *storage.Memory
+	storage       storage.Store
 	template      *template.Template
 	prTemplate    *template.Template
 	buildTemplate *template.Template
 	cssFile       string
+	cssFiles      []CSSOption
+	organization  string
 }
 
-func New(storage *storage.Memory, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, cssFile string) *Handler {
+func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, cssFile string, staticDir string, org string) *Handler {
+	if issuesTmpl == nil {
+		panic("issuesTmpl must not be nil")
+	}
+	if prsTmpl == nil {
+		panic("prsTmpl must not be nil")
+	}
+	if buildTmpl == nil {
+		panic("buildTmpl must not be nil")
+	}
 	return &Handler{
-		storage:       storage,
+		storage:       store,
 		template:      issuesTmpl,
 		prTemplate:    prsTmpl,
 		buildTemplate: buildTmpl,
 		cssFile:       cssFile,
+		cssFiles:      themeFiles(),
+		organization:  org,
 	}
 }
 
@@ -53,9 +70,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		order = "desc"
 	}
 
-	// Get available CSS files
-	cssFiles := getAvailableCSS()
-
 	// Sort issues
 	sortIssues(issues, sortBy, order)
 
@@ -73,39 +87,34 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Issues      []github.Issue
-		LastUpdate  time.Time
-		CurrentPage int
-		TotalPages  int
-		TotalIssues int
-		Sort        string
-		Order       string
-		NextOrder   string
-		CSSFile     string
-		CSSFiles    []string
+		PageID       string
+		Organization string
+		Issues       []github.Issue
+		LastUpdate   time.Time
+		CurrentPage  int
+		TotalPages   int
+		TotalIssues  int
+		Sort         string
+		Order        string
+		NextOrder    string
+		CSSFile      string
+		CSSFiles     []CSSOption
 	}{
-		Issues:      pageIssues,
-		LastUpdate:  lastUpdate,
-		CurrentPage: page,
-		TotalPages:  totalPages,
-		TotalIssues: len(issues),
-		Sort:        sortBy,
-		Order:       order,
-		NextOrder:   getNextOrder(order),
-		CSSFile:     h.cssFile,
-		CSSFiles:    cssFiles,
+		PageID:       "issues",
+		Organization: h.organization,
+		Issues:       pageIssues,
+		LastUpdate:   lastUpdate,
+		CurrentPage:  page,
+		TotalPages:   totalPages,
+		TotalIssues:  len(issues),
+		Sort:         sortBy,
+		Order:        order,
+		NextOrder:    getNextOrder(order),
+		CSSFile:      h.cssFile,
+		CSSFiles:     h.cssFiles,
 	}
 
-	if h.template == nil {
-		log.Printf("ERROR: template is nil!")
-		http.Error(w, "Template not initialized", http.StatusInternalServerError)
-		return
-	}
-
-	if err := h.template.Execute(w, data); err != nil {
-		log.Printf("Error executing issues template: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	renderTemplate(w, h.template, "base", data)
 }
 
 func sortIssues(issues []github.Issue, sortBy, order string) {
@@ -162,20 +171,11 @@ func getNextOrder(current string) string {
 	return "asc"
 }
 
-func getAvailableCSS() []string {
-	var cssFiles []string
-
-	files, err := os.ReadDir("web/static")
-	if err != nil {
-		return cssFiles
+// themeFiles returns the allowlisted theme CSS options.
+func themeFiles() []CSSOption {
+	return []CSSOption{
+		{Value: "auto.css", DisplayName: "Auto"},
+		{Value: "light.css", DisplayName: "Light"},
+		{Value: "dark.css", DisplayName: "Dark"},
 	}
-
-	for _, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".css") {
-			cssFiles = append(cssFiles, file.Name())
-		}
-	}
-
-	sort.Strings(cssFiles)
-	return cssFiles
 }

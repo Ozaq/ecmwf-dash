@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -18,6 +19,11 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/handlers"
 	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
+
+var templateFuncs = template.FuncMap{
+	"add": func(a, b int) int { return a + b },
+	"mul": func(a, b int) int { return a * b },
+}
 
 func main() {
 	// Parse CLI flags
@@ -39,6 +45,10 @@ func main() {
 	// Create storage
 	store := storage.New()
 
+	// Register signals before starting goroutines
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
 	// Create fetcher and start background fetching
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -46,60 +56,84 @@ func main() {
 	f := fetcher.New(cfg, gh, store)
 	f.Start(ctx)
 
-	// Load templates
-	issuesTmpl := template.New("dashboard.html").Funcs(template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"mul": func(a, b int) int { return a * b },
-	})
-	issuesTmpl, err = issuesTmpl.ParseFiles("web/templates/dashboard.html")
+	// Load templates: each page template is parsed together with the base template
+	basePath := "web/templates/base.html"
+
+	issuesTmpl, err := template.New("base.html").Funcs(templateFuncs).ParseFiles(basePath, "web/templates/dashboard.html")
 	if err != nil {
 		log.Fatal("Failed to load dashboard template:", err)
 	}
 
-	prsTmpl := template.New("pullrequests.html").Funcs(template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"mul": func(a, b int) int { return a * b },
-	})
-	prsTmpl, err = prsTmpl.ParseFiles("web/templates/pullrequests.html")
+	prsTmpl, err := template.New("base.html").Funcs(templateFuncs).ParseFiles(basePath, "web/templates/pullrequests.html")
 	if err != nil {
 		log.Fatal("Failed to load pull requests template:", err)
 	}
 
-	buildsTmpl := template.New("builds.html").Funcs(template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"mul": func(a, b int) int { return a * b },
-	})
-	buildsTmpl, err = buildsTmpl.ParseFiles("web/templates/builds.html")
+	buildsTmpl, err := template.New("base.html").Funcs(templateFuncs).ParseFiles(basePath, "web/templates/builds.html")
 	if err != nil {
 		log.Fatal("Failed to load builds template:", err)
 	}
 
-	// Create handler
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, *cssFile)
+	// Validate -css flag against theme allowlist
+	validThemes := map[string]bool{"auto.css": true, "light.css": true, "dark.css": true}
+	if !validThemes[*cssFile] {
+		log.Fatalf("Invalid -css value %q: must be one of auto.css, light.css, dark.css", *cssFile)
+	}
+
+	// Create handler with cached CSS list
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, *cssFile, "web/static", cfg.GitHub.Organization)
 
 	// Setup routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler.BuildStatus)
 	mux.HandleFunc("/builds", handler.BuildStatus)
 	mux.HandleFunc("/pulls", handler.PullRequests)
 	mux.HandleFunc("/issues", handler.Dashboard)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
-	loggedMux := logMiddleware(mux)
+	// Health endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		issueTs, prTs, checksTs := store.LastFetchTimes()
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]any{
+			"status": "ok",
+			"last_fetch": map[string]any{
+				"issues": issueTs,
+				"pulls":  prTs,
+				"checks": checksTs,
+			},
+		}); err != nil {
+			log.Printf("Error encoding health response: %v", err)
+		}
+	})
 
-	// Start server
+	// Root redirects to /builds; unmatched paths get 404
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		http.Redirect(w, r, "/builds", http.StatusFound)
+	})
+
+	wrapped := securityHeaders(logMiddleware(mux))
+
+	// Start server with timeouts (HS1)
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
 
-	server := &http.Server{Addr: addr, Handler: loggedMux}
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      wrapped,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
 
-	// Graceful shutdown
+	// Graceful shutdown; second signal force-quits
 	go func() {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
-
 		log.Println("Shutting down...")
+		go func() { <-sigChan; log.Println("Forced shutdown"); os.Exit(1) }()
 		cancel()
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
@@ -116,6 +150,23 @@ func main() {
 func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Content-Security-Policy",
+			"default-src 'self'; "+
+				"script-src 'self' 'sha256-0jlVAe+b64UKdjnXkkbAXXq5QaZvm8bamP8+r3PxgCY='; "+
+				"style-src 'self' 'unsafe-inline'; "+
+				"img-src 'self' https://avatars.githubusercontent.com; "+
+				"base-uri 'self'; "+
+				"object-src 'none'; "+
+				"frame-ancestors 'none'")
 		next.ServeHTTP(w, r)
 	})
 }

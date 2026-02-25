@@ -13,14 +13,14 @@ import (
 type Fetcher struct {
 	cfg     *config.Config
 	gh      *github.Client
-	storage *storage.Memory
+	storage storage.Store
 }
 
-func New(cfg *config.Config, gh *github.Client, storage *storage.Memory) *Fetcher {
+func New(cfg *config.Config, gh *github.Client, store storage.Store) *Fetcher {
 	return &Fetcher{
 		cfg:     cfg,
 		gh:      gh,
-		storage: storage,
+		storage: store,
 	}
 }
 
@@ -48,7 +48,7 @@ func (f *Fetcher) runIssuesFetcher(ctx context.Context) {
 func (f *Fetcher) fetchIssues(ctx context.Context) {
 	log.Printf("Fetching issues for %s", f.cfg.GitHub.Organization)
 
-	issues, err := f.gh.FetchIssues(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	issues, rate, err := f.gh.FetchIssues(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
 	if err != nil {
 		log.Printf("Error fetching issues: %v", err)
 		return
@@ -56,6 +56,7 @@ func (f *Fetcher) fetchIssues(ctx context.Context) {
 
 	f.storage.SetIssues(issues)
 	log.Printf("Fetched %d issues", len(issues))
+	f.gh.LogRate(rate)
 }
 
 func (f *Fetcher) runPRsFetcher(ctx context.Context) {
@@ -76,7 +77,7 @@ func (f *Fetcher) runPRsFetcher(ctx context.Context) {
 func (f *Fetcher) fetchPullRequests(ctx context.Context) {
 	log.Printf("Fetching pull requests for %s", f.cfg.GitHub.Organization)
 
-	prs, err := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	prs, rate, err := f.gh.FetchPullRequests(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
 	if err != nil {
 		log.Printf("Error fetching pull requests: %v", err)
 		return
@@ -84,6 +85,7 @@ func (f *Fetcher) fetchPullRequests(ctx context.Context) {
 
 	f.storage.SetPullRequests(prs)
 	log.Printf("Fetched %d pull requests", len(prs))
+	f.gh.LogRate(rate)
 }
 
 func (f *Fetcher) runBranchChecksFetcher(ctx context.Context) {
@@ -104,7 +106,7 @@ func (f *Fetcher) runBranchChecksFetcher(ctx context.Context) {
 func (f *Fetcher) fetchBranchChecks(ctx context.Context) {
 	log.Printf("Fetching branch checks for %s", f.cfg.GitHub.Organization)
 
-	checks, err := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
+	checks, rate, err := f.gh.FetchBranchChecks(ctx, f.cfg.GitHub.Organization, f.cfg.GitHub.Repositories)
 	if err != nil {
 		log.Printf("Error fetching branch checks: %v", err)
 		return
@@ -112,4 +114,5 @@ func (f *Fetcher) fetchBranchChecks(ctx context.Context) {
 
 	f.storage.SetBranchChecks(checks)
 	log.Printf("Fetched %d branch checks", len(checks))
+	f.gh.LogRate(rate)
 }

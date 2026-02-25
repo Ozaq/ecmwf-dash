@@ -9,17 +9,23 @@ A Go web dashboard that monitors GitHub issues, pull requests, and CI check stat
 ## Build & Run
 
 ```bash
-# Requires Go 1.22+ (Dockerfile uses 1.24)
+# Requires Go 1.24
 go mod tidy
 
 # Build
-go build -o ecmwf-dash cmd/server/main.go
+make build
 
-# Run (requires GITHUB_TOKEN env var)
+# Run (requires GITHUB_TOKEN env var and config.yaml)
 GITHUB_TOKEN=<token> ./ecmwf-dash
 
-# Run with custom CSS theme
+# Run with custom CSS theme (must be auto.css, light.css, or dark.css)
 ./ecmwf-dash -css dark.css
+
+# Run tests
+make test
+
+# Run vet
+make vet
 ```
 
 The server reads `config.yaml` from the working directory and expects `web/` to be present. Default listen address is `0.0.0.0:8000`.
@@ -27,41 +33,52 @@ The server reads `config.yaml` from the working directory and expects `web/` to 
 ## Docker
 
 ```bash
-docker build -t ecmwf-dash .
-docker run -e GITHUB_TOKEN=<token> -p 8000:8000 ecmwf-dash
+make docker-build
+docker run -e GITHUB_TOKEN=<token> -v $(pwd)/config.yaml:/config.yaml -p 8000:8000 ecmwf-dash
+
+# Or with docker-compose
+GITHUB_TOKEN=<token> docker compose up
 ```
+
+Note: `config.yaml` is NOT baked into the Docker image. Mount it at runtime. The Docker image includes a HEALTHCHECK via `/healthcheck` binary.
 
 ## Architecture
 
-**Entry point**: `cmd/server/main.go` — wires up config, GitHub client, storage, fetcher, handlers, and HTTP routes.
+**Entry point**: `cmd/server/main.go` — wires up config (with validation), GitHub client, storage, fetcher, handlers, security headers middleware (including CSP), and HTTP routes.
 
-**Data flow**: Three background goroutines (`internal/fetcher/`) poll the GitHub API at configured intervals and write results into an in-memory store (`internal/storage/memory.go`, RWMutex-protected). HTTP handlers read from the store and render Go HTML templates.
+**Data flow**: Three background goroutines (`internal/fetcher/`) poll the GitHub API at configured intervals and write results into an in-memory store (`internal/storage/memory.go`, RWMutex-protected). The store deep-copies all data on both get AND set operations to prevent shared mutable state. HTTP handlers read from the `storage.Store` interface and render Go HTML templates via buffered execution (`render.go`).
 
 **Key packages**:
-- `internal/config/` — Loads `config.yaml` (repos, branches, fetch intervals, server settings)
-- `internal/github/` — GitHub API client wrapper. `types.go` defines all data models (Issue, PullRequest, Check, BranchCheck, Reviewer). Separate files for issues, pulls, and actions fetching.
-- `internal/storage/` — Thread-safe in-memory store (no database)
-- `internal/handlers/` — HTTP handlers for three views: `/builds` (default `/`), `/pulls`, `/issues`
-- `internal/fetcher/` — Orchestrates background polling goroutines with context cancellation
+- `internal/config/` — Loads and validates `config.yaml` (repos, branches, fetch intervals, server settings)
+- `internal/github/` — GitHub API client wrapper. `types.go` defines all data models + `isInternal()`. `review.go` contains `DeriveReviewStatus()` (extracted, testable). `helpers.go` has `sanitizeLabelColor()`, `computeTextColor()`, and `computeLabelStyle()` for safe label rendering. Separate files for issues, pulls, and actions fetching. Rate info returned from fetch functions (no extra API calls).
+- `internal/storage/` — `Store` interface + `Memory` implementation. Thread-safe with deep-copy on both reads and writes. `LastFetchTimes()` on the Store interface for the health endpoint.
+- `internal/handlers/` — HTTP handlers for three views: `/builds`, `/pulls`, `/issues`. Theme allowlist (`themeFiles()`) returns only `auto.css`, `light.css`, `dark.css` as `CSSOption` structs. `render.go` provides buffered template execution.
+- `internal/fetcher/` — Orchestrates background polling goroutines with context cancellation. No redundant timestamp tracking (uses `Store.LastFetchTimes()`).
 
-**Frontend**: Server-rendered Go templates in `web/templates/`, static assets in `web/static/`. Three CSS themes (auto/light/dark) with client-side theme switching via localStorage. Auto-refresh configurable 0-15 min. Templates are parsed once at startup — no hot reload; editing a `.html` file requires a restart.
+**Frontend**: Server-rendered Go templates in `web/templates/`, static assets in `web/static/`.
 
-**Template structure**: The three templates (`builds.html`, `dashboard.html`, `pullrequests.html`) are standalone full HTML documents with no shared base template or partials. Nav, theme selector, refresh dropdown, and the anti-flicker inline script are duplicated in all three files. Any shared UI change must be made in three places.
+**Template structure**: Uses Go template inheritance via `base.html` which defines the shared `<head>`, anti-flicker theme script (with CSP sha256 hash), nav, header, and footer. Page templates (`builds.html`, `dashboard.html`, `pullrequests.html`) define `title`, `stats`, `extra-css`, and `content` blocks. All pages use `renderTemplate()` for buffered output.
 
-**API cost**: PR fetching is expensive — 3 API calls per open PR (list reviews, get full PR for `mergeable_state`, list check runs). This is the main rate limit pressure point across the dashboard.
+**CSS architecture**: `base.css` contains all structural rules using CSS custom properties. Theme files (`auto.css`, `light.css`, `dark.css`) are ~20 lines each, overriding `:root` variables only. `builds.css` holds build-page-specific styles (no fallback values — relies on base.css defaults). Theme switching uses `id="theme-link"` lookup with regex validation.
+
+**Label rendering**: Labels use `template.CSS` for safe inline styles. `computeLabelStyle()` produces `background-color` + WCAG-compliant text color. The `LabelStyle` field on `Label` struct is pre-computed during API fetch.
+
+**API cost**: PR fetching is expensive — 3 API calls per open PR (list reviews, get full PR for `mergeable_state`, list check runs). Rate info is extracted from response headers (no separate rate limit API calls). All check run fetches use `filter=latest`.
 
 ## Routes
 
 | Path | Handler | Description |
 |------|---------|-------------|
-| `/` | BuildStatus | Redirects to builds view |
+| `/` | redirect | Redirects to `/builds` |
 | `/builds` | BuildStatus | CI check status per repo/branch |
 | `/pulls` | PullRequests | Open PRs with reviews and checks |
 | `/issues` | Dashboard | Open issues across repos |
+| `/health` | inline | JSON health check with last-fetch timestamps |
+| Unmatched | 404 | Proper 404 for unknown paths |
 
 ## Configuration
 
-`config.yaml` must exist in the working directory. Example structure:
+`config.yaml` must exist in the working directory. Config is validated on load.
 
 ```yaml
 github:
@@ -82,22 +99,30 @@ server:
 
 ## Gotchas
 
-- **WorkflowRuns are dead code**: `WorkflowRun` type, `SetWorkflowRuns`/`GetWorkflowRuns` storage methods, and the fetched data are all unused. No handler reads them.
 - **Builds view only renders two branches**: The handler hardcodes `main`/`master` and `develop`. Other branch names in `config.yaml` are fetched from the API but silently discarded by the builds handler.
-- **GitHub API rate limits**: 12 repos × 2 branches = frequent polling. Ensure `GITHUB_TOKEN` has appropriate scopes (`repo`, `read:checks`).
+- **GitHub API rate limits**: 12 repos x 2 branches = frequent polling. Rate limit warnings appear in logs when remaining < 100.
 - **`CONTRIBUTOR` is treated as external**: `isInternal` only matches `OWNER`, `MEMBER`, or `COLLABORATOR`. Past contributors with merged PRs who aren't collaborators get the "external" badge.
+- **Templates parsed at startup**: No hot reload. Editing a `.html` file requires a restart. Templates validated as non-nil in handler constructor (panics on nil).
+- **CSP hash must match inline script**: If you change the anti-flicker `<script>` in `base.html`, you must recompute the SHA-256 hash and update the CSP header in `cmd/server/main.go`.
+- **`-css` flag validated at startup**: Only `auto.css`, `light.css`, `dark.css` are accepted.
+- **DISMISSED reviews**: A DISMISSED review removes the reviewer from the review map, reverting to their previous state (or removing them entirely).
+- **Healthcheck hardcodes port 8000**: `cmd/healthcheck/main.go` always hits `localhost:8000`. Changing the port in `config.yaml` without updating the healthcheck binary will cause Docker health checks to fail.
+- **Fetchers use partial failure tolerance**: Per-repo errors are logged and skipped; an error is returned only if ALL repos fail. If one repo 404s, the others still update. This means stale data can silently persist for a single broken repo.
+- **`go-github` aliased as `gh`**: All fetch files (`actions.go`, `issues.go`, `pulls.go`) import `github.com/google/go-github/v66/github` as `gh` to avoid collision with the internal `github` package. New fetch code must follow this convention.
+- **Broader check failure counting**: `timed_out`, `cancelled`, `action_required`, `neutral`, `stale` all count as failures — not just `"failure"`. This is intentional but shows more red than GitHub's native UI.
 
 ## Environment
 
 - `GITHUB_TOKEN` (required) — GitHub personal access token for API access
-- CI/CD: `.github/workflows/release.yml` builds and pushes Docker image to Harbor on GitHub release
-
-## Known Bugs
-
-- **PR check runs don't paginate** — `FetchBranchChecks` has a pagination loop but `fetchPRDetails` caps at 100 check runs with no pagination.
-- **`getAvailableCSS()` reads the filesystem on every request** — `os.ReadDir("web/static")` runs per page load to populate the theme dropdown.
+- `config.yaml` is gitignored — must be created locally or mounted at runtime
+- CI/CD: `.github/workflows/release.yml` runs tests then builds and pushes Docker image to Harbor on GitHub release (tagged with both the release version and `latest`)
+- `.github/workflows/ci.yml` runs tests with `-race`, vet, `govulncheck`, and a Docker build (no push) on push/PR
 
 ## Development Status
 
-- No test suite exists
-- No linter configuration exists
+- Test suite covers storage (including deep-copy and concurrency), config validation, review status logic, and label color helpers
+- Race detector enabled in CI and Makefile
+- Security scanning via govulncheck (CI) and Trivy (release)
+- Trivy scan is informational only (`exit-code: 0`) — won't block releases on vulnerabilities
+- All CI actions pinned to full SHA (supply chain security)
+- No linter configuration (uses `go vet`)

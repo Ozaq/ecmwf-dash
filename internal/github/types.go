@@ -1,6 +1,9 @@
 package github
 
-import "time"
+import (
+	"html/template"
+	"time"
+)
 
 type Issue struct {
 	Repository        string
@@ -17,8 +20,9 @@ type Issue struct {
 }
 
 type Label struct {
-	Name  string
-	Color string
+	Name       string
+	Color      string
+	LabelStyle template.CSS // Pre-computed safe CSS for background-color + text color
 }
 
 type PullRequest struct {
@@ -65,24 +69,6 @@ type Check struct {
 	URL        string
 }
 
-type WorkflowRun struct {
-	Repository   string
-	Branch       string
-	WorkflowName string
-	WorkflowID   int64
-	RunID        int64
-	RunNumber    int
-	Status       string // completed, in_progress, queued
-	Conclusion   string // success, failure, neutral, cancelled, skipped, timed_out
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	URL          string
-	HeadBranch   string
-	HeadSHA      string
-	Event        string
-	TriggerActor string
-}
-
 type BranchCheck struct {
 	Repository string
 	Branch     string
@@ -90,4 +76,8 @@ type BranchCheck struct {
 	CommitURL  string
 	UpdatedAt  time.Time
 	Checks     []Check
+}
+
+func isInternal(association string) bool {
+	return association == "OWNER" || association == "MEMBER" || association == "COLLABORATOR"
 }

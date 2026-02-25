@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+.gitignore
+.dockerignore
+*.md
+LICENSE
+Makefile
+ecmwf-dash
+review.md
+plan.md
+config.yaml

@@ -16,19 +16,23 @@ type RepositoryStatus struct {
 }
 
 type BranchStatus struct {
-	Branch    string
-	Checks    []github.Check
-	HasChecks bool
-	CommitSHA string
-	CommitURL string
+	Branch        string
+	Checks        []github.Check
+	HasChecks     bool
+	CommitSHA     string
+	CommitURL     string
+	SuccessCount  int
+	FailureCount  int
+	RunningCount  int
+	OverallStatus string
+	StatusClass   string
 }
 
 func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 	branchChecks, lastUpdate := h.storage.GetBranchChecks()
 	log.Printf("Serving /builds - Branch checks: %d", len(branchChecks))
 
-	// Get available CSS files
-	cssFiles := getAvailableCSS()
+	cssFiles := h.cssFiles
 
 	// Group checks by repository and branch
 	repoMap := make(map[string]*RepositoryStatus)
@@ -56,11 +60,13 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 			repo.MainBranch.HasChecks = len(branchCheck.Checks) > 0
 			repo.MainBranch.CommitSHA = branchCheck.CommitSHA
 			repo.MainBranch.CommitURL = branchCheck.CommitURL
+			computeBranchCounts(&repo.MainBranch)
 		} else if branchCheck.Branch == "develop" {
 			repo.DevelopBranch.Checks = branchCheck.Checks
 			repo.DevelopBranch.HasChecks = len(branchCheck.Checks) > 0
 			repo.DevelopBranch.CommitSHA = branchCheck.CommitSHA
 			repo.DevelopBranch.CommitURL = branchCheck.CommitURL
+			computeBranchCounts(&repo.DevelopBranch)
 		}
 	}
 
@@ -76,26 +82,48 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 	})
 
 	data := struct {
+		PageID       string
+		Organization string
 		Repositories []*RepositoryStatus
 		LastUpdate   time.Time
 		CSSFile      string
-		CSSFiles     []string
+		CSSFiles     []CSSOption
 	}{
+		PageID:       "builds",
+		Organization: h.organization,
 		Repositories: repositories,
 		LastUpdate:   lastUpdate,
 		CSSFile:      h.cssFile,
 		CSSFiles:     cssFiles,
 	}
 
-	if h.buildTemplate == nil {
-		log.Printf("ERROR: buildTemplate is nil!")
-		http.Error(w, "Template not initialized", http.StatusInternalServerError)
-		return
-	}
+	renderTemplate(w, h.buildTemplate, "base", data)
+}
 
-	if err := h.buildTemplate.Execute(w, data); err != nil {
-		log.Printf("Error executing build template: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func computeBranchCounts(bs *BranchStatus) {
+	for _, check := range bs.Checks {
+		switch {
+		case check.Status == "in_progress" || check.Status == "queued" || check.Status == "waiting" || check.Status == "pending":
+			bs.RunningCount++
+		case check.Conclusion == "failure" || check.Conclusion == "timed_out" || check.Conclusion == "action_required" || check.Conclusion == "cancelled":
+			bs.FailureCount++
+		case check.Conclusion == "success":
+			bs.SuccessCount++
+		}
+	}
+	switch {
+	case bs.RunningCount > 0:
+		bs.OverallStatus = "Running"
+		bs.StatusClass = "status-running"
+	case bs.FailureCount > 0:
+		bs.OverallStatus = "Failed"
+		bs.StatusClass = "status-failure"
+	case bs.SuccessCount > 0:
+		bs.OverallStatus = "Passed"
+		bs.StatusClass = "status-success"
+	default:
+		bs.OverallStatus = "Unknown"
+		bs.StatusClass = "status-neutral"
 	}
 }
 
@@ -104,11 +132,10 @@ func isMainBranch(branch string) bool {
 }
 
 func getMainBranch(repo string, checks []github.BranchCheck) string {
-	// Check if repository has main or master branch
 	for _, check := range checks {
 		if check.Repository == repo && (check.Branch == "main" || check.Branch == "master") {
 			return check.Branch
 		}
 	}
-	return "main" // default
+	return "main"
 }

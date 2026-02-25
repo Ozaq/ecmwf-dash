@@ -29,8 +29,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		order = "desc"
 	}
 
-	// Get available CSS files
-	cssFiles := getAvailableCSS()
+	cssFiles := h.cssFiles
 
 	// Sort PRs
 	sortPullRequests(prs, sortBy, order)
@@ -49,6 +48,8 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
+		PageID       string
+		Organization string
 		PullRequests []github.PullRequest
 		LastUpdate   time.Time
 		CurrentPage  int
@@ -58,8 +59,10 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		Order        string
 		NextOrder    string
 		CSSFile      string
-		CSSFiles     []string
+		CSSFiles     []CSSOption
 	}{
+		PageID:       "pulls",
+		Organization: h.organization,
 		PullRequests: pagePRs,
 		LastUpdate:   lastUpdate,
 		CurrentPage:  page,
@@ -72,16 +75,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		CSSFiles:     cssFiles,
 	}
 
-	if h.prTemplate == nil {
-		log.Printf("ERROR: prTemplate is nil!")
-		http.Error(w, "Template not initialized", http.StatusInternalServerError)
-		return
-	}
-
-	if err := h.prTemplate.Execute(w, data); err != nil {
-		log.Printf("Error executing PR template: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	renderTemplate(w, h.prTemplate, "base", data)
 }
 
 func sortPullRequests(prs []github.PullRequest, sortBy, order string) {

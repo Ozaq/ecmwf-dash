@@ -2,29 +2,44 @@ package github
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
-	"github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v66/github"
 	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
-func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []config.RepositoryConfig) ([]PullRequest, error) {
+func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []config.RepositoryConfig) ([]PullRequest, RateInfo, error) {
 	var allPRs []PullRequest
+	var lastRate RateInfo
+	successCount := 0
 
 	for _, repo := range repos {
-		opts := &github.PullRequestListOptions{
+		if ctx.Err() != nil {
+			break
+		}
+
+		opts := &gh.PullRequestListOptions{
 			State: "open",
-			ListOptions: github.ListOptions{
+			ListOptions: gh.ListOptions{
 				PerPage: 100,
 			},
 		}
 
+		repoFailed := false
 		for {
+			if ctx.Err() != nil {
+				break
+			}
+
 			prs, resp, err := c.gh.PullRequests.List(ctx, org, repo.Name, opts)
 			if err != nil {
-				return nil, fmt.Errorf("fetching PRs for %s/%s: %w", org, repo, err)
+				log.Printf("Error fetching PRs for %s/%s: %v", org, repo.Name, err)
+				repoFailed = true
+				break
+			}
+			if resp != nil {
+				lastRate = rateFromResponse(resp)
 			}
 
 			for _, ghPR := range prs {
@@ -52,16 +67,19 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []conf
 
 				// Convert labels
 				for _, label := range ghPR.Labels {
+					color := sanitizeLabelColor(label.GetColor())
 					pr.Labels = append(pr.Labels, Label{
-						Name:  label.GetName(),
-						Color: label.GetColor(),
+						Name:       label.GetName(),
+						Color:      color,
+						LabelStyle: computeLabelStyle(color),
 					})
 				}
 
 				// Fetch additional details
-				if err := c.fetchPRDetails(ctx, org, repo.Name, ghPR.GetNumber(), &pr); err != nil {
-					// Log but continue
-					log.Printf("Error fetching PR details for %s/%s#%d: %v", org, repo, ghPR.GetNumber(), err)
+				rate, err := c.fetchPRDetails(ctx, org, repo.Name, ghPR.GetNumber(), &pr)
+				lastRate = rate
+				if err != nil {
+					log.Printf("Error fetching PR details for %s/%s#%d: %v", org, repo.Name, ghPR.GetNumber(), err)
 				}
 
 				allPRs = append(allPRs, pr)
@@ -72,98 +90,140 @@ func (c *Client) FetchPullRequests(ctx context.Context, org string, repos []conf
 			}
 			opts.Page = resp.NextPage
 		}
+
+		if !repoFailed {
+			successCount++
+		}
 	}
 
-	return allPRs, nil
+	if successCount == 0 && len(repos) > 0 {
+		return allPRs, lastRate, ctx.Err()
+	}
+
+	return allPRs, lastRate, nil
 }
 
-func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number int, pr *PullRequest) error {
-	// Fetch reviews
-	reviews, _, err := c.gh.PullRequests.ListReviews(ctx, org, repo, number, nil)
-	if err != nil {
-		return fmt.Errorf("fetching reviews: %w", err)
-	}
+func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number int, pr *PullRequest) (RateInfo, error) {
+	var lastRate RateInfo
 
+	// Fetch reviews with pagination
+	reviewOpts := &gh.ListOptions{PerPage: 100}
 	reviewMap := make(map[string]*Reviewer)
 	reviewTimes := make(map[string]time.Time)
-	approved := false
-	changesRequested := false
 
-	for _, review := range reviews {
-		if review.GetState() == "" {
-			continue
+	for {
+		if ctx.Err() != nil {
+			return lastRate, ctx.Err()
 		}
 
-		login := review.GetUser().GetLogin()
-		// Keep only the latest review per user
-		if _, ok := reviewMap[login]; !ok || review.GetSubmittedAt().Time.After(reviewTimes[login]) {
-			reviewMap[login] = &Reviewer{
-				Login:  login,
-				Avatar: review.GetUser().GetAvatarURL(),
-				State:  review.GetState(),
+		reviews, resp, err := c.gh.PullRequests.ListReviews(ctx, org, repo, number, reviewOpts)
+		if err != nil {
+			return lastRate, err
+		}
+		if resp != nil {
+			lastRate = rateFromResponse(resp)
+		}
+
+		for _, review := range reviews {
+			state := review.GetState()
+			if state == "" || state == "COMMENTED" {
+				continue
 			}
-			reviewTimes[login] = review.GetSubmittedAt().Time
+
+			login := review.GetUser().GetLogin()
+
+			// DISMISSED reviews remove the reviewer's previous state
+			if state == "DISMISSED" {
+				delete(reviewMap, login)
+				delete(reviewTimes, login)
+				continue
+			}
+
+			if _, ok := reviewMap[login]; !ok || review.GetSubmittedAt().Time.After(reviewTimes[login]) {
+				reviewMap[login] = &Reviewer{
+					Login:  login,
+					Avatar: review.GetUser().GetAvatarURL(),
+					State:  state,
+				}
+				reviewTimes[login] = review.GetSubmittedAt().Time
+			}
 		}
 
-		if review.GetState() == "APPROVED" {
-			approved = true
-		} else if review.GetState() == "CHANGES_REQUESTED" {
-			changesRequested = true
+		if resp.NextPage == 0 {
+			break
 		}
+		reviewOpts.Page = resp.NextPage
 	}
 
 	for _, reviewer := range reviewMap {
 		pr.Reviewers = append(pr.Reviewers, *reviewer)
 	}
 
-	// Set review status
-	if changesRequested {
-		pr.ReviewStatus = "changes_requested"
-	} else if approved {
-		pr.ReviewStatus = "approved"
-	} else {
-		pr.ReviewStatus = "pending"
-	}
+	pr.ReviewStatus = DeriveReviewStatus(reviewMap)
 
 	// Fetch detailed PR info for mergeable state
-	fullPR, _, err := c.gh.PullRequests.Get(ctx, org, repo, number)
+	fullPR, resp, err := c.gh.PullRequests.Get(ctx, org, repo, number)
 	if err != nil {
-		return fmt.Errorf("fetching PR details: %w", err)
+		return lastRate, err
+	}
+	if resp != nil {
+		lastRate = rateFromResponse(resp)
 	}
 
 	pr.MergeableState = fullPR.GetMergeableState()
 	pr.ReviewComments = fullPR.GetReviewComments()
 
-	// Fetch check runs
-	checkRuns, _, err := c.gh.Checks.ListCheckRunsForRef(ctx, org, repo, fullPR.GetHead().GetSHA(), &github.ListCheckRunsOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
-	})
-	if err != nil {
-		return fmt.Errorf("fetching check runs: %w", err)
+	// Fetch check runs with pagination and explicit filter
+	filterLatest := "latest"
+	checkOpts := &gh.ListCheckRunsOptions{
+		Filter:      &filterLatest,
+		ListOptions: gh.ListOptions{PerPage: 100},
 	}
 
-	for _, check := range checkRuns.CheckRuns {
-		// Skip skipped checks
-		if check.GetConclusion() == "skipped" {
-			continue
+	for {
+		if ctx.Err() != nil {
+			return lastRate, ctx.Err()
 		}
 
-		pr.Checks = append(pr.Checks, Check{
-			Name:       check.GetName(),
-			Status:     check.GetStatus(),
-			Conclusion: check.GetConclusion(),
-			URL:        check.GetHTMLURL(),
-		})
-
-		// Count checks
-		if check.GetStatus() == "in_progress" {
-			pr.ChecksRunning++
-		} else if check.GetConclusion() == "success" {
-			pr.ChecksSuccess++
-		} else if check.GetConclusion() == "failure" {
-			pr.ChecksFailure++
+		checkRuns, resp, err := c.gh.Checks.ListCheckRunsForRef(ctx, org, repo, fullPR.GetHead().GetSHA(), checkOpts)
+		if err != nil {
+			return lastRate, err
 		}
+		if resp != nil {
+			lastRate = rateFromResponse(resp)
+		}
+
+		for _, check := range checkRuns.CheckRuns {
+			if check.GetConclusion() == "skipped" {
+				continue
+			}
+
+			pr.Checks = append(pr.Checks, Check{
+				Name:       check.GetName(),
+				Status:     check.GetStatus(),
+				Conclusion: check.GetConclusion(),
+				URL:        check.GetHTMLURL(),
+			})
+
+			// Count check results — only explicit success counts as passed;
+			// all other completed states (failure, timed_out, cancelled,
+			// action_required, neutral, stale) count as failures.
+			switch {
+			case check.GetStatus() == "in_progress" || check.GetStatus() == "queued" ||
+				check.GetStatus() == "waiting" || check.GetStatus() == "pending":
+				pr.ChecksRunning++
+			case check.GetConclusion() == "success":
+				pr.ChecksSuccess++
+			default:
+				pr.ChecksFailure++
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		checkOpts.Page = resp.NextPage
 	}
 
-	return nil
+	return lastRate, nil
 }
