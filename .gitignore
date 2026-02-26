@@ -23,7 +23,7 @@ Thumbs.db
 config.yaml
 
 # Build binary
-server
+/server
 
 # Review notes
 master-review.md
