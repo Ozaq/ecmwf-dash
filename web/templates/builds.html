@@ -56,13 +56,14 @@
 {{else}}
 <div class="build-list">
     {{range .Repositories}}
-    {{$hasDetails := or (gt .MainBranch.FailureCount 0) (gt .MainBranch.RunningCount 0) (gt .DevelopBranch.FailureCount 0) (gt .DevelopBranch.RunningCount 0)}}
+    {{$hasDetails := .HasDetails}}
     <div class="build-row {{if $hasDetails}}has-details{{end}}{{if .Stale}} stale-row{{end}}" {{if $hasDetails}}role="button" tabindex="0" aria-expanded="false"{{end}}>
         <div class="build-row-header">
             <a class="build-repo" href="https://github.com/{{$.Organization}}/{{.Name}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
             <div class="build-lanes">
-                {{template "build-lane" .DevelopBranch}}
-                {{template "build-lane" .MainBranch}}
+                {{range .Branches}}
+                {{template "build-lane" .}}
+                {{end}}
             </div>
             {{if $hasDetails}}
             <span class="build-chevron" aria-hidden="true"></span>
@@ -73,35 +74,22 @@
         {{if $hasDetails}}
         <div class="build-details">
             <div class="build-details-inner">
-                {{if or (gt .DevelopBranch.FailureCount 0) (gt .DevelopBranch.RunningCount 0)}}
-                <div class="detail-branch">
-                    <span class="detail-branch-label">{{.DevelopBranch.Branch}}</span>
-                    <ul class="detail-checks">
-                        {{range .DevelopBranch.Checks}}
-                            {{if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled") (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}
-                            <li class="detail-check">
-                                <span class="detail-indicator {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else}}status-failure{{end}}"></span>
-                                <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
-                            </li>
+                {{range .Branches}}
+                    {{if or (gt .FailureCount 0) (gt .RunningCount 0)}}
+                    <div class="detail-branch">
+                        <span class="detail-branch-label">{{.Branch}}</span>
+                        <ul class="detail-checks">
+                            {{range .Checks}}
+                                {{if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled") (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}
+                                <li class="detail-check">
+                                    <span class="detail-indicator {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else}}status-failure{{end}}"></span>
+                                    <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
+                                </li>
+                                {{end}}
                             {{end}}
-                        {{end}}
-                    </ul>
-                </div>
-                {{end}}
-                {{if or (gt .MainBranch.FailureCount 0) (gt .MainBranch.RunningCount 0)}}
-                <div class="detail-branch">
-                    <span class="detail-branch-label">{{.MainBranch.Branch}}</span>
-                    <ul class="detail-checks">
-                        {{range .MainBranch.Checks}}
-                            {{if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled") (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}
-                            <li class="detail-check">
-                                <span class="detail-indicator {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else}}status-failure{{end}}"></span>
-                                <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
-                            </li>
-                            {{end}}
-                        {{end}}
-                    </ul>
-                </div>
+                        </ul>
+                    </div>
+                    {{end}}
                 {{end}}
             </div>
         </div>

@@ -1,5 +1,5 @@
 {{define "tv-branch-section"}}
-<div class="branch-section {{if eq .Branch "develop"}}branch-develop{{else}}branch-main{{end}} {{if gt .FailureCount 0}}has-failures{{else if gt .RunningCount 0}}has-running{{end}}">
+<div class="branch-section {{if .IsMain}}branch-main{{else if eq .Branch "develop"}}branch-develop{{else}}branch-other{{end}} {{if gt .FailureCount 0}}has-failures{{else if gt .RunningCount 0}}has-running{{end}}">
     <div class="branch-header">
         <span class="branch-name">{{.Branch}}</span>
         {{if .HasChecks}}
@@ -81,8 +81,9 @@
                     <div class="card-header">
                         <h3 class="repo-name">{{.Name}}</h3>
                     </div>
-                    {{template "tv-branch-section" .MainBranch}}
-                    {{template "tv-branch-section" .DevelopBranch}}
+                    {{range .Branches}}
+                    {{template "tv-branch-section" .}}
+                    {{end}}
                 </div>
                 {{end}}
             </div>

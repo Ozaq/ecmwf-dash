@@ -163,6 +163,10 @@ html.tv-mode .branch-develop {
     border-left: 3px solid var(--accent-color);
 }
 
+html.tv-mode .branch-other {
+    border-left: 3px solid var(--neutral-color);
+}
+
 /* ===== Summary pills and counts ===== */
 .branch-summary {
     display: flex;

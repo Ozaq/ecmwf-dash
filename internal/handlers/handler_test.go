@@ -61,12 +61,17 @@ func newTestHandler(t *testing.T) (*Handler, *storage.Memory) {
 	}
 
 	store := storage.New()
+	repoNames := []string{"eccodes", "atlas"}
+	repoConfig := []RepoBranches{
+		{Name: "eccodes", Branches: []string{"master", "develop"}},
+		{Name: "atlas", Branches: []string{"main", "develop"}},
+	}
 	intervals := FetchIntervals{
 		Issues:       5 * time.Minute,
 		PullRequests: 5 * time.Minute,
 		Actions:      5 * time.Minute,
 	}
-	h := New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, "ecmwf", "test", []string{"eccodes", "atlas"}, intervals)
+	h := New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, "ecmwf", "test", repoNames, repoConfig, intervals)
 	return h, store
 }
 
@@ -332,7 +337,7 @@ func TestBuildStatusHandlerStaleness(t *testing.T) {
 			[]github.BranchCheck{
 				{Repository: "eccodes", Branch: "master", CommitSHA: "abc",
 					Checks: []github.Check{{Name: "ci", Status: "completed", Conclusion: "success", URL: "#"}}},
-				{Repository: "atlas", Branch: "master", CommitSHA: "def",
+				{Repository: "atlas", Branch: "main", CommitSHA: "def",
 					Checks: []github.Check{{Name: "ci", Status: "completed", Conclusion: "success", URL: "#"}}},
 			},
 			[]string{"atlas"},

@@ -103,10 +103,12 @@ func main() {
 		log.Fatal("Failed to load builds dashboard template:", err)
 	}
 
-	// Extract configured repo names for the builds dashboard
+	// Extract configured repo names and per-repo branch config
 	repoNames := make([]string, len(cfg.GitHub.Repositories))
+	repoConfig := make([]handlers.RepoBranches, len(cfg.GitHub.Repositories))
 	for i, repo := range cfg.GitHub.Repositories {
 		repoNames[i] = repo.Name
+		repoConfig[i] = handlers.RepoBranches{Name: repo.Name, Branches: repo.Branches}
 	}
 
 	// Create handler
@@ -115,7 +117,7 @@ func main() {
 		PullRequests: cfg.FetchIntervals.PullRequests,
 		Actions:      cfg.FetchIntervals.Actions,
 	}
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, cfg.GitHub.Organization, Version, repoNames, intervals)
+	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, cfg.GitHub.Organization, Version, repoNames, repoConfig, intervals)
 
 	// Setup routes
 	mux := http.NewServeMux()

@@ -21,10 +21,11 @@ type Handler struct {
 	organization      string
 	version           string
 	repoNames         []string
+	repoConfig        []RepoBranches
 	fetchIntervals    FetchIntervals
 }
 
-func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, org string, version string, repoNames []string, intervals FetchIntervals) *Handler {
+func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, org string, version string, repoNames []string, repoConfig []RepoBranches, intervals FetchIntervals) *Handler {
 	if issuesTmpl == nil {
 		panic("issuesTmpl must not be nil")
 	}
@@ -46,6 +47,7 @@ func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.T
 		organization:      org,
 		version:           version,
 		repoNames:         repoNames,
+		repoConfig:        repoConfig,
 		fetchIntervals:    intervals,
 	}
 }
