@@ -44,7 +44,7 @@
         </colgroup>
         <thead>
             <tr>
-                <th aria-sort="{{if eq .Sort "repo"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "repo"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=repo&order={{if and (eq .Sort "repo") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Repository
                         <span class="sort-arrow {{if eq .Sort "repo"}}active{{end}}">
@@ -52,7 +52,7 @@
                         </span>
                     </a>
                 </th>
-                <th aria-sort="{{if eq .Sort "title"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "title"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=title&order={{if and (eq .Sort "title") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Title
                         <span class="sort-arrow {{if eq .Sort "title"}}active{{end}}">
@@ -60,7 +60,7 @@
                         </span>
                     </a>
                 </th>
-                <th class="col-author" aria-sort="{{if eq .Sort "author"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" class="col-author" aria-sort="{{if eq .Sort "author"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=author&order={{if and (eq .Sort "author") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Author
                         <span class="sort-arrow {{if eq .Sort "author"}}active{{end}}">
@@ -68,10 +68,10 @@
                         </span>
                     </a>
                 </th>
-                <th class="col-branch">Branch</th>
-                <th>Review</th>
-                <th>Merge</th>
-                <th aria-sort="{{if eq .Sort "updated"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" class="col-branch">Branch</th>
+                <th scope="col">Review</th>
+                <th scope="col">Merge</th>
+                <th scope="col" aria-sort="{{if eq .Sort "updated"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=updated&order={{if and (eq .Sort "updated") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Updated
                         <span class="sort-arrow {{if eq .Sort "updated"}}active{{end}}">
@@ -103,9 +103,9 @@
                         <div class="checks-matrix">
                             {{range .Checks}}
                             <a href="{{.URL}}" target="_blank" rel="noopener noreferrer"
-                               aria-label="{{.Name}}: {{if eq .Status "completed"}}{{.Conclusion}}{{else}}{{.Status}}{{end}}"
-                               data-tooltip="{{.Name}}: {{if eq .Status "completed"}}{{.Conclusion}}{{else}}{{.Status}}{{end}}"
-                               class="check-dot tooltip-dot {{if eq .Status "in_progress"}}running{{else if eq .Conclusion "success"}}success{{else if eq .Conclusion "failure"}}failure{{else}}neutral{{end}}">
+                               aria-label="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
+                               data-tooltip="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
+                               class="check-dot tooltip-dot {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}running{{else if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled")}}failure{{else if eq .Conclusion "success"}}success{{else}}neutral{{end}}">
                             </a>
                             {{end}}
                         </div>
@@ -138,7 +138,7 @@
                     {{if .Reviewers}}
                     <div class="reviewers">
                         {{range .Reviewers}}
-                        <img src="{{.Avatar}}?s=40" alt="{{.Login}}" title="{{.Login}}: {{.State}}" loading="lazy"
+                        <img src="{{.Avatar}}?s=40" alt="{{.Login}}: {{.State}}" title="{{.Login}}: {{.State}}" loading="lazy"
                              class="reviewer-avatar {{if eq .State "APPROVED"}}approved{{else if eq .State "CHANGES_REQUESTED"}}changes{{end}}" width="20" height="20">
                         {{end}}
                     </div>
