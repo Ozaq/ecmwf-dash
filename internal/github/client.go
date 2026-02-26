@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	gh "github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v83/github"
 	"golang.org/x/oauth2"
 )
 

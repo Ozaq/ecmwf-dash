@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	gh "github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v83/github"
 	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
@@ -80,7 +80,7 @@ func (c *Client) FetchIssues(ctx context.Context, org string, repos []config.Rep
 			if resp.NextPage == 0 {
 				break
 			}
-			opts.Page = resp.NextPage
+			opts.ListOptions.Page = resp.NextPage
 		}
 
 		if repoFailed {

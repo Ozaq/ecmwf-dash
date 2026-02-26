@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	gh "github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v83/github"
 	"github.com/ozaq/ecmwf-dash/internal/config"
 )
 
