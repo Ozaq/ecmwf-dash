@@ -44,13 +44,17 @@ func sanitizeRepo(repo string, validRepos []string) string {
 	return ""
 }
 
-// paginate returns clamped start/end indices and total page count for the
-// given total item count, 1-based page number, and page size.
+// paginate returns clamped start/end indices (0-based, exclusive end) and
+// total page count for the given total item count, 1-based page number, and
+// page size. Returns (0, 0, 0) when total or pageSize is <= 0.
 func paginate(total, page, pageSize int) (start, end, totalPages int) {
 	if total <= 0 || pageSize <= 0 {
 		return 0, 0, 0
 	}
 	totalPages = (total + pageSize - 1) / pageSize
+	if page < 1 {
+		page = 1
+	}
 	if page > totalPages {
 		page = totalPages
 	}

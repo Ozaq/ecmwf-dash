@@ -9,6 +9,9 @@ package github
 func DeriveReviewStatus(reviewers map[string]*Reviewer) string {
 	status := "pending"
 	for _, reviewer := range reviewers {
+		if reviewer == nil {
+			continue
+		}
 		switch reviewer.State {
 		case "CHANGES_REQUESTED":
 			return "changes_requested"

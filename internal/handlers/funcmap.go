@@ -5,8 +5,8 @@ import (
 	"math/rand/v2"
 )
 
-// Affirmations are the celebratory messages shown when all checks pass.
-var Affirmations = []string{
+// affirmations are the celebratory messages shown when all checks pass.
+var affirmations = []string{
 	"All clear!",
 	"Ship it!",
 	"Nailed it!",
@@ -35,7 +35,7 @@ func TemplateFuncs() template.FuncMap {
 		"add": func(a, b int) int { return a + b },
 		"mul": func(a, b int) int { return a * b },
 		"affirm": func() string {
-			return Affirmations[rand.IntN(len(Affirmations))]
+			return affirmations[rand.IntN(len(affirmations))]
 		},
 	}
 }

@@ -40,6 +40,9 @@ type HandlerConfig struct {
 }
 
 func New(cfg HandlerConfig) *Handler {
+	if cfg.Store == nil {
+		panic("Store must not be nil")
+	}
 	if cfg.IssuesTmpl == nil {
 		panic("IssuesTmpl must not be nil")
 	}
