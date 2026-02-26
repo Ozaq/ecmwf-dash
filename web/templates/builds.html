@@ -32,7 +32,7 @@
             <a href="{{.URL}}" target="_blank" rel="noopener noreferrer"
                aria-label="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
                data-tooltip="{{.Name}}: {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}Running{{else if eq .Conclusion "cancelled"}}Cancelled{{else}}{{.Conclusion}}{{end}}"
-               class="lane-dot {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled")}}status-failure{{else if eq .Conclusion "success"}}status-success{{else}}status-neutral{{end}}">
+               class="lane-dot tooltip-dot {{if or (eq .Status "in_progress") (eq .Status "queued") (eq .Status "waiting") (eq .Status "pending")}}status-running{{else if or (eq .Conclusion "failure") (eq .Conclusion "timed_out") (eq .Conclusion "action_required") (eq .Conclusion "cancelled")}}status-failure{{else if eq .Conclusion "success"}}status-success{{else}}status-neutral{{end}}">
             </a>
             {{end}}
         </div>

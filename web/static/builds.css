@@ -127,35 +127,6 @@
 .lane-dot.status-running { background: var(--warning-color); }
 .lane-dot.status-neutral { background: var(--neutral-color); }
 
-/* Dot tooltip */
-.lane-dot:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(100% + 6px);
-    background-color: var(--text-color);
-    color: var(--card-bg);
-    padding: 4px 6px;
-    border-radius: 3px;
-    font-size: 11px;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 9999;
-}
-
-.lane-dot:hover::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(100% + 2px);
-    border-width: 4px;
-    border-style: solid;
-    border-color: var(--text-color) transparent transparent transparent;
-    z-index: 9999;
-}
-
 /* ===== Compact counts ===== */
 .lane-counts {
     display: flex;

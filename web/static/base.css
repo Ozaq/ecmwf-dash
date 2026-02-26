@@ -16,7 +16,7 @@
     --error-color: #d1242f;
     --warning-color: #fb8500;
     --neutral-color: #6e7781;
-    --muted-text: #2B5A8C;
+    --muted-text: #6e7781;
 }
 
 /* Screen reader only */
@@ -38,6 +38,7 @@ body {
     padding: 20px;
     background: var(--bg-color);
     color: var(--text-color);
+    line-height: 1.5;
 }
 
 .container {
@@ -394,7 +395,7 @@ a:hover {
     z-index: 10;
 }
 
-.check-dot:hover::after {
+.tooltip-dot:hover::after {
     content: attr(data-tooltip);
     position: absolute;
     left: 50%;
@@ -410,7 +411,7 @@ a:hover {
     z-index: 9999;
 }
 
-.check-dot:hover::before {
+.tooltip-dot:hover::before {
     content: "";
     position: absolute;
     left: 50%;
@@ -527,7 +528,7 @@ tr.stale-row td:first-child {
         align-items: flex-start;
     }
 
-    table {
+    .issues-table:not(.pr-table-wrap) table {
         min-width: 700px;
     }
 
@@ -544,6 +545,72 @@ tr.stale-row td:first-child {
 
     .time {
         font-size: 12px;
+    }
+
+    /* PR table: card layout on mobile */
+    .pr-table-wrap {
+        overflow-x: visible;
+    }
+
+    .pr-table-wrap table {
+        table-layout: auto;
+        min-width: 0;
+    }
+
+    .pr-table-wrap thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    .pr-table-wrap tr {
+        display: block;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: var(--card-bg);
+    }
+
+    .pr-table-wrap td {
+        display: block;
+        border: none;
+        padding: 4px 0;
+    }
+
+    .pr-table-wrap td::before {
+        content: attr(data-label);
+        display: block;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: var(--secondary-text);
+        margin-bottom: 2px;
+    }
+
+    .pr-table-wrap td[data-label=""]::before,
+    .pr-table-wrap td:not([data-label])::before {
+        display: none;
+    }
+
+    .pr-table-wrap .col-author,
+    .pr-table-wrap .col-branch {
+        display: block;
+    }
+
+    .pr-table-wrap .branch-info {
+        max-width: none;
+    }
+
+    .pr-table-wrap .pr-title-text a {
+        white-space: normal;
     }
 }
 
