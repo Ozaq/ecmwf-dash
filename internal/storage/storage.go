@@ -6,6 +6,13 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/github"
 )
 
+// Category constants for RepoFetchTimes.
+const (
+	CategoryIssues = "issues"
+	CategoryPRs    = "prs"
+	CategoryChecks = "checks"
+)
+
 // Store defines the interface for data access. All consumers should depend on
 // this interface rather than the concrete *Memory type.
 type Store interface {

@@ -149,9 +149,9 @@ func main() {
 				"checks": checksTs,
 			},
 			"repo_fetch_times": map[string]any{
-				"issues": store.RepoFetchTimes("issues"),
-				"pulls":  store.RepoFetchTimes("prs"),
-				"checks": store.RepoFetchTimes("checks"),
+				"issues": store.RepoFetchTimes(storage.CategoryIssues),
+				"pulls":  store.RepoFetchTimes(storage.CategoryPRs),
+				"checks": store.RepoFetchTimes(storage.CategoryChecks),
 			},
 		}); err != nil {
 			log.Printf("Error encoding health response: %v", err)

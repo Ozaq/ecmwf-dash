@@ -101,7 +101,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		pageIssues = issues[start:end]
 	}
 
-	staleMap, staleList := h.computeStaleness("issues", h.fetchIntervals.Issues, lastUpdate)
+	staleMap, staleList := h.computeStaleness(storage.CategoryIssues, h.fetchIntervals.Issues, lastUpdate)
 
 	data := struct {
 		PageID        string

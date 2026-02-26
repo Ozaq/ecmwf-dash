@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ozaq/ecmwf-dash/internal/github"
+	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
 // RepoBranches carries per-repo branch config without importing the config package.
@@ -170,7 +171,7 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		repositories = filtered
 	}
 
-	staleMap, staleList := h.computeStaleness("checks", h.fetchIntervals.Actions, lastUpdate)
+	staleMap, staleList := h.computeStaleness(storage.CategoryChecks, h.fetchIntervals.Actions, lastUpdate)
 	for _, r := range repositories {
 		r.Stale = staleMap[r.Name]
 	}
@@ -226,7 +227,7 @@ func (h *Handler) BuildsDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	sortByConfigOrder(repositories, h.repoNames)
 
-	staleMap, staleList := h.computeStaleness("checks", h.fetchIntervals.Actions, lastUpdate)
+	staleMap, staleList := h.computeStaleness(storage.CategoryChecks, h.fetchIntervals.Actions, lastUpdate)
 	for _, repo := range repositories {
 		repo.Stale = staleMap[repo.Name]
 	}

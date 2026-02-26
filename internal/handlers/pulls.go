@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ozaq/ecmwf-dash/internal/github"
+	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
 func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +46,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		pagePRs = prs[start:end]
 	}
 
-	staleMap, staleList := h.computeStaleness("prs", h.fetchIntervals.PullRequests, lastUpdate)
+	staleMap, staleList := h.computeStaleness(storage.CategoryPRs, h.fetchIntervals.PullRequests, lastUpdate)
 
 	data := struct {
 		PageID        string

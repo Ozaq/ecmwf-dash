@@ -96,10 +96,12 @@ func (m *Memory) MergeIssues(issues []github.Issue, failedRepos, succeededRepos 
 	merged = append(merged, deepCopyIssues(issues)...)
 	m.issues = merged
 
-	now := time.Now()
-	m.issuesTime = now
-	for _, name := range succeededRepos {
-		m.issueRepoTimes[name] = now
+	if len(succeededRepos) > 0 {
+		now := time.Now()
+		m.issuesTime = now
+		for _, name := range succeededRepos {
+			m.issueRepoTimes[name] = now
+		}
 	}
 }
 
@@ -114,10 +116,12 @@ func (m *Memory) MergePullRequests(prs []github.PullRequest, failedRepos, succee
 	merged = append(merged, deepCopyPullRequests(prs)...)
 	m.pullRequests = merged
 
-	now := time.Now()
-	m.prsTime = now
-	for _, name := range succeededRepos {
-		m.prRepoTimes[name] = now
+	if len(succeededRepos) > 0 {
+		now := time.Now()
+		m.prsTime = now
+		for _, name := range succeededRepos {
+			m.prRepoTimes[name] = now
+		}
 	}
 }
 
@@ -132,10 +136,12 @@ func (m *Memory) MergeBranchChecks(checks []github.BranchCheck, failedRepos, suc
 	merged = append(merged, deepCopyBranchChecks(checks)...)
 	m.branchChecks = merged
 
-	now := time.Now()
-	m.branchChecksTime = now
-	for _, name := range succeededRepos {
-		m.checkRepoTimes[name] = now
+	if len(succeededRepos) > 0 {
+		now := time.Now()
+		m.branchChecksTime = now
+		for _, name := range succeededRepos {
+			m.checkRepoTimes[name] = now
+		}
 	}
 }
 
@@ -146,11 +152,11 @@ func (m *Memory) RepoFetchTimes(category string) map[string]time.Time {
 
 	var src map[string]time.Time
 	switch category {
-	case "issues":
+	case CategoryIssues:
 		src = m.issueRepoTimes
-	case "prs":
+	case CategoryPRs:
 		src = m.prRepoTimes
-	case "checks":
+	case CategoryChecks:
 		src = m.checkRepoTimes
 	default:
 		return make(map[string]time.Time)
