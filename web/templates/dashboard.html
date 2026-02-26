@@ -104,7 +104,7 @@
                 </td>
                 <td data-label="Author">
                     <div class="author-info">
-                        <img src="{{.AuthorAvatar}}?s=48" alt="" class="author-avatar" loading="lazy">
+                        <img src="{{.AuthorAvatar}}?s=48" alt="" class="author-avatar" loading="lazy" width="24" height="24">
                         <a href="https://github.com/{{.Author}}" target="_blank" rel="noopener noreferrer">{{.Author}}</a>
                         {{if .IsExternal}}
                         <span class="external-badge" title="Not a repository owner, member, or collaborator">external</span>
@@ -127,8 +127,8 @@
         <a href="?sort={{.Sort}}&order={{.Order}}&page=1&repo={{.Repo}}">&#171; First</a>
         <a href="?sort={{.Sort}}&order={{.Order}}&page={{.CurrentPage | add -1}}&repo={{.Repo}}">&#8249; Previous</a>
     {{else}}
-        <span class="pagination-disabled" role="link" aria-disabled="true">&#171; First</span>
-        <span class="pagination-disabled" role="link" aria-disabled="true">&#8249; Previous</span>
+        <span class="pagination-disabled">&#171; First</span>
+        <span class="pagination-disabled">&#8249; Previous</span>
     {{end}}
 
     <span class="pagination-info">Page {{.CurrentPage}} of {{.TotalPages}}</span>
@@ -137,8 +137,8 @@
         <a href="?sort={{.Sort}}&order={{.Order}}&page={{.CurrentPage | add 1}}&repo={{.Repo}}">Next &#8250;</a>
         <a href="?sort={{.Sort}}&order={{.Order}}&page={{.TotalPages}}&repo={{.Repo}}">Last &#187;</a>
     {{else}}
-        <span class="pagination-disabled" role="link" aria-disabled="true">Next &#8250;</span>
-        <span class="pagination-disabled" role="link" aria-disabled="true">Last &#187;</span>
+        <span class="pagination-disabled">Next &#8250;</span>
+        <span class="pagination-disabled">Last &#187;</span>
     {{end}}
 </div>
 {{end}}

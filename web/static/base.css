@@ -389,7 +389,8 @@ a:hover {
     z-index: 10;
 }
 
-.tooltip-dot:hover::after {
+.tooltip-dot:hover::after,
+.tooltip-dot:focus-visible::after {
     content: attr(data-tooltip);
     position: absolute;
     left: 50%;
@@ -405,7 +406,8 @@ a:hover {
     z-index: 9999;
 }
 
-.tooltip-dot:hover::before {
+.tooltip-dot:hover::before,
+.tooltip-dot:focus-visible::before {
     content: "";
     position: absolute;
     left: 50%;

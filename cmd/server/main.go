@@ -177,16 +177,25 @@ func logMiddleware(next http.Handler) http.Handler {
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		w.Header().Set("Content-Security-Policy",
-			"default-src 'self'; "+
-				"script-src 'self'; "+
-				"style-src 'self' 'unsafe-inline'; "+
-				"img-src 'self' https://avatars.githubusercontent.com; "+
-				"base-uri 'self'; "+
-				"object-src 'none'; "+
-				"frame-ancestors 'none'")
+
+		// Allow iframe embedding for /builds-dashboard (TV/kiosk mode)
+		isTVDashboard := r.URL.Path == "/builds-dashboard"
+		if !isTVDashboard {
+			w.Header().Set("X-Frame-Options", "DENY")
+		}
+
+		csp := "default-src 'self'; " +
+			"script-src 'self'; " +
+			"style-src 'self' 'unsafe-inline'; " +
+			"img-src 'self' https://avatars.githubusercontent.com; " +
+			"base-uri 'self'; " +
+			"object-src 'none'"
+		if !isTVDashboard {
+			csp += "; frame-ancestors 'none'"
+		}
+		w.Header().Set("Content-Security-Policy", csp)
+
 		next.ServeHTTP(w, r)
 	})
 }
