@@ -14,8 +14,10 @@
     --success-color: #1a7f37;
     --error-color: #d1242f;
     --warning-color: #fb8500;
+    --warning-text: #b45f00; /* WCAG AA 4.5:1 on white — use for text, --warning-color for dots/borders */
     --neutral-color: #6e7781;
-    --muted-text: #6e7781; /* Intentionally matches --neutral-color; separate token for semantic use */
+    --muted-text: #576069; /* WCAG AA compliant; --neutral-color kept for non-text use */
+    --link-color: #A66214; /* WCAG AA 4.5:1 on white — darker than --accent-color */
 }
 
 /* Screen reader only */
@@ -242,7 +244,7 @@ tr:last-child td {
 }
 
 a {
-    color: var(--accent-color);
+    color: var(--link-color);
     text-decoration: none;
 }
 
@@ -432,7 +434,7 @@ a:hover {
 
 .check-count.success { color: var(--success-color); }
 .check-count.failure { color: var(--error-color); }
-.check-count.running { color: var(--warning-color); }
+.check-count.running { color: var(--warning-text); }
 
 /* Repo filter */
 .filter-form {

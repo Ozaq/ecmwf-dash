@@ -96,6 +96,25 @@
     max-height: 38px;
     overflow: hidden;
     align-items: flex-start;
+    position: relative;
+}
+
+/* Fade-out gradient when dots overflow */
+.lane-strip::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: linear-gradient(transparent, var(--card-bg));
+    pointer-events: none;
+    opacity: 0; /* hidden by default, shown via JS or :has() */
+}
+
+/* Show fade when strip has enough dots to potentially overflow (>3 rows) */
+.lane-strip:has(.lane-dot:nth-child(n+16))::after {
+    opacity: 1;
 }
 
 .lane-dot {
@@ -138,7 +157,7 @@
 }
 
 .count-failure { color: var(--error-color); }
-.count-running { color: var(--warning-color); }
+.count-running { color: var(--warning-text); }
 
 /* ===== Chevron ===== */
 .build-chevron {

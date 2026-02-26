@@ -116,6 +116,7 @@ html.tv-mode .build-card {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 html.tv-mode .card-header {
@@ -135,17 +136,12 @@ html.tv-mode .repo-name {
 
 /* ===== Branch sections ===== */
 html.tv-mode .branch-section {
-    margin-bottom: 4px;
     padding-left: 8px;
     flex: 1 1 0;
     min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-}
-
-html.tv-mode .branch-section:last-child {
-    margin-bottom: 0;
 }
 
 html.tv-mode .branch-header {
@@ -158,7 +154,7 @@ html.tv-mode .branch-header {
 }
 
 html.tv-mode .branch-name {
-    font-size: clamp(8px, 0.8vw, 12px);
+    font-size: clamp(9px, 0.8vw, 12px);
 }
 
 /* Branch distinction via left border */
@@ -182,7 +178,7 @@ html.tv-mode .branch-other {
 }
 
 .summary-pill {
-    font-size: clamp(8px, 0.8vw, 12px);
+    font-size: clamp(9px, 0.8vw, 12px);
     font-weight: 600;
     padding: 1px 8px;
     border-radius: 8px;
@@ -195,13 +191,13 @@ html.tv-mode .branch-other {
 }
 
 .summary-count {
-    font-size: clamp(8px, 0.8vw, 12px);
+    font-size: clamp(9px, 0.8vw, 12px);
     font-weight: 600;
 }
 
 .count-success { color: var(--success-color); }
 .count-failure { color: var(--error-color); }
-.count-running { color: var(--warning-color); }
+.count-running { color: var(--warning-text); }
 
 /* ===== Failure and running lists ===== */
 .failure-list,
@@ -225,7 +221,7 @@ html.tv-mode .running-list {
     display: flex;
     align-items: center;
     gap: 3px;
-    font-size: clamp(7px, 0.7vw, 11px);
+    font-size: clamp(8px, 0.7vw, 11px);
     padding: 1px 6px;
     border-radius: 3px;
     line-height: 1.3;
@@ -241,7 +237,7 @@ html.tv-mode .running-list {
 .running-item {
     background: rgba(251, 133, 0, 0.12);
     background: color-mix(in srgb, var(--warning-color) 12%, transparent);
-    color: var(--warning-color);
+    color: var(--warning-text);
 }
 
 .failure-indicator,
