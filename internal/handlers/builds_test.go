@@ -110,11 +110,15 @@ func TestComputeBranchCounts(t *testing.T) {
 			wantStatus: "Unknown", wantClass: "status-neutral",
 		},
 		{
-			name: "neutral_skipped_are_uncounted",
+			name: "neutral_counts_as_failure",
 			checks: []github.Check{
 				{Status: "completed", Conclusion: "neutral"},
-				{Status: "completed", Conclusion: "skipped"},
 			},
+			wantFailure: 1, wantStatus: "Failed", wantClass: "status-failure",
+		},
+		{
+			name:       "no_checks_unknown",
+			checks:     nil,
 			wantStatus: "Unknown", wantClass: "status-neutral",
 		},
 	}

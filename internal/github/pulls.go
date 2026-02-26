@@ -218,14 +218,10 @@ func (c *Client) fetchPRDetails(ctx context.Context, org, repo string, number in
 				URL:        check.GetHTMLURL(),
 			})
 
-			// Count check results — only explicit success counts as passed;
-			// all other completed states (failure, timed_out, cancelled,
-			// action_required, neutral, stale) count as failures.
-			switch {
-			case check.GetStatus() == "in_progress" || check.GetStatus() == "queued" ||
-				check.GetStatus() == "waiting" || check.GetStatus() == "pending":
+			switch ClassifyCheck(check.GetStatus(), check.GetConclusion()) {
+			case "running":
 				pr.ChecksRunning++
-			case check.GetConclusion() == "success":
+			case "success":
 				pr.ChecksSuccess++
 			default:
 				pr.ChecksFailure++

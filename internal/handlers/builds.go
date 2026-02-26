@@ -272,13 +272,13 @@ func (h *Handler) BuildsDashboard(w http.ResponseWriter, r *http.Request) {
 
 func computeBranchCounts(bs *BranchStatus) {
 	for _, check := range bs.Checks {
-		switch {
-		case check.Status == "in_progress" || check.Status == "queued" || check.Status == "waiting" || check.Status == "pending":
+		switch github.ClassifyCheck(check.Status, check.Conclusion) {
+		case "running":
 			bs.RunningCount++
-		case check.Conclusion == "failure" || check.Conclusion == "timed_out" || check.Conclusion == "action_required" || check.Conclusion == "cancelled":
-			bs.FailureCount++
-		case check.Conclusion == "success":
+		case "success":
 			bs.SuccessCount++
+		default:
+			bs.FailureCount++
 		}
 	}
 	switch {
