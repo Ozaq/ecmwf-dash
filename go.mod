@@ -1,6 +1,6 @@
 module github.com/ozaq/ecmwf-dash
 
-go 1.24.0
+go 1.26.0
 
 require (
 	github.com/google/go-github/v83 v83.0.0
