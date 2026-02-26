@@ -197,8 +197,11 @@ func securityHeaders(next http.Handler) http.Handler {
 			"style-src 'self' 'unsafe-inline'; " +
 			"img-src 'self' https://avatars.githubusercontent.com; " +
 			"base-uri 'self'; " +
-			"object-src 'none'"
-		if !isTVDashboard {
+			"object-src 'none'; " +
+			"form-action 'self'"
+		if isTVDashboard {
+			csp += "; frame-ancestors 'self'"
+		} else {
 			csp += "; frame-ancestors 'none'"
 		}
 		w.Header().Set("Content-Security-Policy", csp)
