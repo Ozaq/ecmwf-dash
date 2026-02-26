@@ -615,28 +615,28 @@ tr.stale-row td:first-child {
 }
 
 @media (max-width: 480px) {
-    .issues-table table,
-    .issues-table thead,
-    .issues-table tbody,
-    .issues-table th,
-    .issues-table td,
-    .issues-table tr {
+    .issues-table:not(.pr-table-wrap) table,
+    .issues-table:not(.pr-table-wrap) thead,
+    .issues-table:not(.pr-table-wrap) tbody,
+    .issues-table:not(.pr-table-wrap) th,
+    .issues-table:not(.pr-table-wrap) td,
+    .issues-table:not(.pr-table-wrap) tr {
         display: block;
     }
 
-    .issues-table thead tr {
+    .issues-table:not(.pr-table-wrap) thead tr {
         position: absolute;
         top: -9999px;
         left: -9999px;
     }
 
-    .issues-table tr {
+    .issues-table:not(.pr-table-wrap) tr {
         border-bottom: var(--divider);
         margin-bottom: 0;
         padding: 10px 0;
     }
 
-    .issues-table td {
+    .issues-table:not(.pr-table-wrap) td {
         border: none;
         padding: 8px 0;
         position: relative;
@@ -645,7 +645,7 @@ tr.stale-row td:first-child {
         align-items: flex-start;
     }
 
-    .issues-table td:before {
+    .issues-table:not(.pr-table-wrap) td:before {
         content: attr(data-label);
         font-weight: 600;
         color: var(--interactive-color);
