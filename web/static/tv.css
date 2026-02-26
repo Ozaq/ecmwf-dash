@@ -220,11 +220,13 @@ html.tv-mode .branch-other {
 }
 
 .failure-item {
+    background: rgba(209, 36, 47, 0.15);
     background: color-mix(in srgb, var(--error-color) 15%, transparent);
     color: var(--error-color);
 }
 
 .running-item {
+    background: rgba(251, 133, 0, 0.12);
     background: color-mix(in srgb, var(--warning-color) 12%, transparent);
     color: var(--warning-color);
 }
@@ -250,6 +252,7 @@ html.tv-mode .branch-other {
 /* ===== Card-level failure emphasis ===== */
 html.tv-mode .build-card:has(.has-failures) {
     border-left: 3px solid var(--error-color);
+    box-shadow: 0 0 8px rgba(209, 36, 47, 0.3);
     box-shadow: 0 0 8px color-mix(in srgb, var(--error-color) 30%, transparent);
 }
 

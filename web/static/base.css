@@ -83,9 +83,9 @@ body {
 }
 
 .nav-links a.active {
-    background: var(--accent-color);
+    background: #A66214; /* Darker than --accent-color for WCAG AA 4.5:1 on white */
     color: var(--card-bg);
-    border-color: var(--accent-color);
+    border-color: #A66214;
 }
 
 .header-info {
@@ -280,12 +280,6 @@ a:hover {
     text-decoration: none;
 }
 
-.pagination a.active {
-    background: var(--accent-color);
-    color: var(--card-bg);
-    border-color: var(--accent-color);
-}
-
 .pagination-disabled {
     padding: 8px 12px;
     border: 1px solid var(--interactive-color);
@@ -459,6 +453,7 @@ a:hover {
 
 /* Stale data indicators */
 .stale-banner {
+    background: #fff5eb;
     background: color-mix(in srgb, var(--warning-color) 12%, var(--card-bg));
     border: 1px solid var(--warning-color);
     border-radius: 6px;
@@ -524,10 +519,6 @@ tr.stale-row td:first-child {
         align-items: flex-start;
     }
 
-    .issues-table:not(.pr-table-wrap) table {
-        min-width: 700px;
-    }
-
     th, td {
         padding: 8px;
         font-size: 14px;
@@ -543,7 +534,7 @@ tr.stale-row td:first-child {
         font-size: 12px;
     }
 
-    /* PR table: card layout on mobile */
+    /* PR table: card layout on tablet/mobile */
     .pr-table-wrap {
         overflow-x: visible;
     }
@@ -612,9 +603,8 @@ tr.stale-row td:first-child {
     .pr-table-wrap tr.stale-row {
         border-left: 3px solid var(--warning-color);
     }
-}
 
-@media (max-width: 480px) {
+    /* Issues table: card layout on tablet/mobile (same breakpoint as PRs) */
     .issues-table:not(.pr-table-wrap) table,
     .issues-table:not(.pr-table-wrap) thead,
     .issues-table:not(.pr-table-wrap) tbody,

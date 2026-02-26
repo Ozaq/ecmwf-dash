@@ -93,7 +93,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
-    max-height: 26px;
+    max-height: 38px;
     overflow: hidden;
     align-items: flex-start;
 }
@@ -223,7 +223,7 @@
 .detail-indicator {
     width: 8px;
     height: 8px;
-    border-radius: 50%;
+    border-radius: 1px;
     flex-shrink: 0;
 }
 
@@ -256,6 +256,12 @@
     .lane-branch {
         width: 52px;
         font-size: 9px;
+    }
+
+    .build-lane + .build-lane {
+        border-top: 1px solid var(--border-color);
+        padding-top: 4px;
+        margin-top: 4px;
     }
 
     .detail-branch {
