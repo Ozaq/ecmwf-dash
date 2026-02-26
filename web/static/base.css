@@ -85,9 +85,9 @@ body {
 }
 
 .nav-links a.active {
-    background: #A66214; /* Darker than --accent-color for WCAG AA 4.5:1 on white */
+    background: var(--link-color);
     color: var(--card-bg);
-    border-color: #A66214;
+    border-color: var(--link-color);
 }
 
 .header-info {

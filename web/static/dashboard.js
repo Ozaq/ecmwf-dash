@@ -42,13 +42,14 @@
                     }
 
                     // Restore focus
+                    var focusEl = null;
                     if (focusId) {
-                        var focusEl = document.getElementById(focusId);
+                        focusEl = document.getElementById(focusId);
                         if (focusEl) focusEl.focus();
                     }
-                    if ((!focusId || !document.getElementById(focusId)) && focusLabel) {
+                    if (!focusEl && focusLabel) {
                         if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
-                            var focusEl = document.querySelector('[aria-label="' + CSS.escape(focusLabel) + '"]');
+                            focusEl = document.querySelector('[aria-label="' + CSS.escape(focusLabel) + '"]');
                             if (focusEl) focusEl.focus();
                         }
                     }
