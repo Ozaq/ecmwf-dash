@@ -57,11 +57,11 @@
         scheduleRefresh();
     }
 
-    // Avatar fallback — hide broken images
+    // Avatar fallback — hide broken images (use visibility to avoid CLS)
     document.addEventListener('error', function(e) {
         if (e.target.tagName === 'IMG' &&
             (e.target.classList.contains('author-avatar') || e.target.classList.contains('reviewer-avatar'))) {
-            e.target.style.display = 'none';
+            e.target.style.visibility = 'hidden';
         }
     }, true);
 
@@ -94,6 +94,9 @@
     // Dashboard mode: relative update time + countdown refresh + adaptive grid
     if (document.documentElement.classList.contains('tv-mode')) {
         var REFRESH_MS = 60000;
+        var MAX_FAILURES = 3;
+        var failCount = 0;
+        var refreshing = false;
         var countdownEl = document.getElementById('tv-countdown');
 
         // Align to the next whole minute boundary
@@ -101,20 +104,27 @@
         var msToNextMinute = REFRESH_MS - (now % REFRESH_MS);
         var reloadAt = now + msToNextMinute;
 
-        // Build DOM structure once so we only update the number text
+        // Build DOM structure for countdown; rebuilt after each DOM swap
         var numSpan = null;
-        if (countdownEl) {
-            countdownEl.textContent = '';
-            var pre = document.createTextNode('Refresh in ');
-            numSpan = document.createElement('span');
-            numSpan.className = 'tv-countdown-num';
-            var suf = document.createTextNode('s');
-            countdownEl.appendChild(pre);
-            countdownEl.appendChild(numSpan);
-            countdownEl.appendChild(suf);
+        function buildCountdownDOM() {
+            countdownEl = document.getElementById('tv-countdown');
+            numSpan = null;
+            if (countdownEl) {
+                countdownEl.textContent = '';
+                var pre = document.createTextNode('Refresh in ');
+                numSpan = document.createElement('span');
+                numSpan.className = 'tv-countdown-num';
+                var suf = document.createTextNode('s');
+                countdownEl.appendChild(pre);
+                countdownEl.appendChild(numSpan);
+                countdownEl.appendChild(suf);
+            }
         }
+        buildCountdownDOM();
 
         function refreshDashboard() {
+            if (refreshing) return;
+            refreshing = true;
             fetch(window.location.href).then(function(resp) {
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
                 return resp.text();
@@ -132,9 +142,23 @@
                 while (newContainer.firstChild) {
                     container.appendChild(document.adoptNode(newContainer.firstChild));
                 }
+
+                // Re-acquire countdown DOM references after swap (N1)
+                buildCountdownDOM();
+                // Recalculate grid for potentially changed card count (N7)
+                computeGrid();
+
+                failCount = 0;
+                refreshing = false;
             }).catch(function(err) {
-                console.warn('TV refresh failed, falling back to reload:', err);
-                window.location.reload();
+                refreshing = false;
+                failCount++;
+                if (failCount < MAX_FAILURES) {
+                    console.warn('TV refresh failed (attempt ' + failCount + '/' + MAX_FAILURES + '):', err);
+                } else {
+                    console.warn('TV refresh failed ' + MAX_FAILURES + ' times, falling back to reload:', err);
+                    window.location.reload();
+                }
             });
         }
 
@@ -154,36 +178,36 @@
         setInterval(tick, 1000);
 
         // Viewport-adaptive grid: compute optimal cols/rows for card count
-        var cards = document.querySelectorAll('.build-card');
-        var n = cards.length;
-        if (n > 0) {
-            function computeGrid() {
-                var main = document.querySelector('.tv-main');
-                if (!main) return;
-                var w = main.clientWidth;
-                var h = main.clientHeight;
+        function computeGrid() {
+            var cards = document.querySelectorAll('.build-card');
+            var n = cards.length;
+            if (n === 0) return;
 
-                var bestCols = 1, bestScore = Infinity;
-                for (var c = 1; c <= n; c++) {
-                    var r = Math.ceil(n / c);
-                    var cellW = w / c;
-                    var cellH = h / r;
-                    var cellAspect = cellW / cellH;
-                    // Target ~1.6:1 aspect ratio (landscape cards suit horizontal content)
-                    var score = Math.abs(cellAspect - 1.6);
-                    if (score < bestScore) {
-                        bestScore = score;
-                        bestCols = c;
-                    }
+            var main = document.querySelector('.tv-main');
+            if (!main) return;
+            var w = main.clientWidth;
+            var h = main.clientHeight;
+
+            var bestCols = 1, bestScore = Infinity;
+            for (var c = 1; c <= n; c++) {
+                var r = Math.ceil(n / c);
+                var cellW = w / c;
+                var cellH = h / r;
+                var cellAspect = cellW / cellH;
+                // Target ~1.6:1 aspect ratio (landscape cards suit horizontal content)
+                var score = Math.abs(cellAspect - 1.6);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestCols = c;
                 }
-                var bestRows = Math.ceil(n / bestCols);
-
-                document.documentElement.style.setProperty('--tv-cols', bestCols);
-                document.documentElement.style.setProperty('--tv-rows', bestRows);
             }
+            var bestRows = Math.ceil(n / bestCols);
 
-            computeGrid();
-            window.addEventListener('resize', computeGrid);
+            document.documentElement.style.setProperty('--tv-cols', bestCols);
+            document.documentElement.style.setProperty('--tv-rows', bestRows);
         }
+
+        computeGrid();
+        window.addEventListener('resize', computeGrid);
     }
 })();
