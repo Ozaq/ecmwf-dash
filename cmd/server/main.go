@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"math/rand/v2"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,37 +20,6 @@ import (
 )
 
 var Version = "dev"
-
-var affirmations = []string{
-	"All clear!",
-	"Ship it!",
-	"Nailed it!",
-	"All green!",
-	"Smooth sailing!",
-	"Looking good!",
-	"Rock solid!",
-	"On point!",
-	"Crushing it!",
-	"Zero issues!",
-	"Clean sweep!",
-	"Top notch!",
-	"Flawless!",
-	"All systems go!",
-	"Nice work!",
-	"Spot on!",
-	"Well done!",
-	"No worries!",
-	"Locked in!",
-	"All good!",
-}
-
-var templateFuncs = template.FuncMap{
-	"add": func(a, b int) int { return a + b },
-	"mul": func(a, b int) int { return a * b },
-	"affirm": func() string {
-		return affirmations[rand.IntN(len(affirmations))]
-	},
-}
 
 func main() {
 	// Load config
@@ -83,22 +51,22 @@ func main() {
 	// Load templates: each page template is parsed together with the base template
 	basePath := "web/templates/base.html"
 
-	issuesTmpl, err := template.New("base.html").Funcs(templateFuncs).ParseFiles(basePath, "web/templates/dashboard.html")
+	issuesTmpl, err := template.New("base.html").Funcs(handlers.TemplateFuncs()).ParseFiles(basePath, "web/templates/dashboard.html")
 	if err != nil {
 		log.Fatal("Failed to load dashboard template:", err)
 	}
 
-	prsTmpl, err := template.New("base.html").Funcs(templateFuncs).ParseFiles(basePath, "web/templates/pullrequests.html")
+	prsTmpl, err := template.New("base.html").Funcs(handlers.TemplateFuncs()).ParseFiles(basePath, "web/templates/pullrequests.html")
 	if err != nil {
 		log.Fatal("Failed to load pull requests template:", err)
 	}
 
-	buildsTmpl, err := template.New("base.html").Funcs(templateFuncs).ParseFiles(basePath, "web/templates/builds.html")
+	buildsTmpl, err := template.New("base.html").Funcs(handlers.TemplateFuncs()).ParseFiles(basePath, "web/templates/builds.html")
 	if err != nil {
 		log.Fatal("Failed to load builds template:", err)
 	}
 
-	dashboardTmpl, err := template.New("builds_dashboard.html").Funcs(templateFuncs).ParseFiles("web/templates/builds_dashboard.html", "web/templates/builds.html")
+	dashboardTmpl, err := template.New("builds_dashboard.html").Funcs(handlers.TemplateFuncs()).ParseFiles("web/templates/builds_dashboard.html", "web/templates/builds.html")
 	if err != nil {
 		log.Fatal("Failed to load builds dashboard template:", err)
 	}

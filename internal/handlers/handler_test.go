@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"html/template"
-	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -21,18 +20,7 @@ func templateDir() string {
 	return filepath.Join(filepath.Dir(thisFile), "..", "..", "web", "templates")
 }
 
-// testAffirmations is a subset of the list in cmd/server/main.go.
-var testAffirmations = []string{"All clear!", "Ship it!", "Nailed it!"}
-
-// testFuncs duplicates the template FuncMap from cmd/server/main.go.
-// Duplicated here to avoid exporting it from the production binary.
-var testFuncs = template.FuncMap{
-	"add": func(a, b int) int { return a + b },
-	"mul": func(a, b int) int { return a * b },
-	"affirm": func() string {
-		return testAffirmations[rand.IntN(len(testAffirmations))]
-	},
-}
+var testFuncs = TemplateFuncs()
 
 // newTestHandler creates a Handler wired to real templates and an empty store.
 func newTestHandler(t *testing.T) (*Handler, *storage.Memory) {
