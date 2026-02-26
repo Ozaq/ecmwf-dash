@@ -3,6 +3,9 @@ package handlers
 import (
 	"testing"
 	"time"
+
+	"github.com/ozaq/ecmwf-dash/internal/github"
+	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
 func TestStaleReposNoneStale(t *testing.T) {
@@ -83,5 +86,70 @@ func TestSortedKeysNil(t *testing.T) {
 	got := sortedKeys(nil)
 	if got != nil {
 		t.Errorf("expected nil, got %v", got)
+	}
+}
+
+func TestComputeStalenessZeroLastUpdate(t *testing.T) {
+	h := &Handler{
+		storage:   storage.New(),
+		repoNames: []string{"eccodes", "atlas"},
+	}
+	staleMap, staleList := h.computeStaleness(storage.CategoryIssues, 10*time.Minute, time.Time{})
+	if len(staleMap) != 0 {
+		t.Errorf("expected empty staleMap on zero lastUpdate, got %v", staleMap)
+	}
+	if staleList != nil {
+		t.Errorf("expected nil staleList on zero lastUpdate, got %v", staleList)
+	}
+}
+
+func TestComputeStalenessAllFresh(t *testing.T) {
+	store := storage.New()
+	now := time.Now()
+
+	// Populate the store so RepoFetchTimes returns recent timestamps
+	store.MergeIssues(
+		[]github.Issue{{Number: 1, Repository: "eccodes"}, {Number: 2, Repository: "atlas"}},
+		nil,
+		[]string{"eccodes", "atlas"},
+	)
+
+	h := &Handler{
+		storage:   store,
+		repoNames: []string{"eccodes", "atlas"},
+	}
+	staleMap, staleList := h.computeStaleness(storage.CategoryIssues, 10*time.Minute, now)
+	if len(staleMap) != 0 {
+		t.Errorf("expected empty staleMap when all fresh, got %v", staleMap)
+	}
+	if staleList != nil {
+		t.Errorf("expected nil staleList when all fresh, got %v", staleList)
+	}
+}
+
+func TestComputeStalenessOneStale(t *testing.T) {
+	store := storage.New()
+	now := time.Now()
+
+	// Only populate eccodes — atlas will be missing from repo fetch times
+	store.MergeIssues(
+		[]github.Issue{{Number: 1, Repository: "eccodes"}},
+		nil,
+		[]string{"eccodes"},
+	)
+
+	h := &Handler{
+		storage:   store,
+		repoNames: []string{"eccodes", "atlas"},
+	}
+	staleMap, staleList := h.computeStaleness(storage.CategoryIssues, 10*time.Minute, now)
+	if !staleMap["atlas"] {
+		t.Error("expected atlas to be stale")
+	}
+	if staleMap["eccodes"] {
+		t.Error("expected eccodes to NOT be stale")
+	}
+	if len(staleList) != 1 || staleList[0] != "atlas" {
+		t.Errorf("expected staleList=[atlas], got %v", staleList)
 	}
 }
