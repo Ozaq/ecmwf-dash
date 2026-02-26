@@ -124,6 +124,8 @@ server:
 - **No `Cache-Control` on static assets**: `http.FileServer` in `main.go:106` is used bare — no middleware adds `Cache-Control` headers. CSS/JS assets rely on heuristic browser caching and `Last-Modified` conditional requests only.
 - **Lane-strip `max-height` clips checks silently**: `builds.css` `.lane-strip` has `max-height: 26px; overflow: hidden`, allowing ~2 rows of dots. Branches with >22-24 checks have excess dots silently hidden — no "+N more" indicator. The `lane-counts` span only shows failure/running counts, so overflow of passing checks is invisible.
 - **`DeriveReviewStatus()` nil map value risk**: `review.go` iterates `map[string]*Reviewer` and dereferences each value without nil-guarding (`reviewer.State` at line 12). Callers (`pulls.go`) always insert non-nil `&Reviewer{}`, but the function contract doesn't enforce it — a nil map value causes a panic.
+- **Active nav link contrast fails WCAG AA**: `.nav-links a.active` (`base.css:85-89`) uses `--accent-color` (#C87519) on white (`--card-bg`), producing ~3.49:1 contrast ratio. WCAG AA for normal text (14px/500 weight) requires 4.5:1 — this fails. Passes large-text threshold (3.0:1) but the nav links are normal-sized text.
+- **Release workflow missing `govulncheck`**: CI (`ci.yml`) runs `govulncheck` but the release workflow (`release.yml`) does not — releases can ship with known Go vulnerabilities that CI would have caught on push/PR.
 
 ## Environment
 
