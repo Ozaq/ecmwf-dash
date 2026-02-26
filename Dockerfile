@@ -12,6 +12,7 @@ FROM gcr.io/distroless/static-debian12
 WORKDIR /
 COPY --from=builder --chown=nobody:nobody /ecmwf-dash /ecmwf-dash
 COPY --from=builder --chown=nobody:nobody /healthcheck /healthcheck
+COPY --chown=nobody:nobody config.yaml ./config.yaml
 COPY --chown=nobody:nobody web ./web
 USER nobody
 EXPOSE 8000

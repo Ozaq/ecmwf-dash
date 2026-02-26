@@ -31,13 +31,13 @@ The server reads `config.yaml` from the working directory and expects `web/` to 
 
 ```bash
 make docker-build
-docker run -e GITHUB_TOKEN=<token> -v $(pwd)/config.yaml:/config.yaml -p 8000:8000 ecmwf-dash
+docker run -e GITHUB_TOKEN=<token> -p 8000:8000 ecmwf-dash
 
 # Or with docker-compose
 GITHUB_TOKEN=<token> docker compose up
 ```
 
-Note: `config.yaml` is NOT baked into the Docker image. Mount it at runtime. The Docker image includes a HEALTHCHECK via `/healthcheck` binary.
+Note: `config.yaml` IS baked into the Docker image at build time. To use a different config, mount over it: `-v $(pwd)/config.yaml:/config.yaml`. The Docker image includes a HEALTHCHECK via `/healthcheck` binary.
 
 ## Architecture
 
@@ -133,7 +133,7 @@ server:
 
 - `GITHUB_TOKEN` (required) — GitHub personal access token for API access
 - No CLI flags — all configuration is via `config.yaml` and environment variables
-- `config.yaml` is gitignored — must be created locally or mounted at runtime
+- `config.yaml` is gitignored — must be created locally. It IS baked into the Docker image at build time (not mounted).
 - CI/CD: `.github/workflows/release.yml` runs tests, builds Docker image locally, scans with Trivy (blocking), then pushes to Harbor on GitHub release (tagged with both the release version and `latest`)
 - `.github/workflows/ci.yml` runs tests with `-race`, vet, `govulncheck@v1.1.4`, and a Docker build (no push) on push/PR
 

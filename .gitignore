@@ -19,8 +19,8 @@ Thumbs.db
 # Logs
 *.log
 
-# Config (runtime only, not baked into image)
-config.yaml
+# Config — tracked despite gitignore (force-added); baked into Docker image
+# config.yaml
 
 # Build binary
 /server
