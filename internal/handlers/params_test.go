@@ -100,7 +100,7 @@ func TestPaginate(t *testing.T) {
 		{"last page exact", 200, 2, 100, 100, 200, 2},
 		{"single page", 50, 1, 100, 0, 50, 1},
 		{"empty list", 0, 1, 100, 0, 0, 0},
-		{"page beyond end", 50, 5, 100, 50, 50, 1},
+		{"page beyond end clamps to last", 50, 5, 100, 0, 50, 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

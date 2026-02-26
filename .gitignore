@@ -21,3 +21,11 @@ Thumbs.db
 
 # Config (runtime only, not baked into image)
 config.yaml
+
+# Build binary
+server
+
+# Review notes
+master-review.md
+review.md
+plan.md

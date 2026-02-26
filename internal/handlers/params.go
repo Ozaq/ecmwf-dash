@@ -51,6 +51,9 @@ func paginate(total, page, pageSize int) (start, end, totalPages int) {
 		return 0, 0, 0
 	}
 	totalPages = (total + pageSize - 1) / pageSize
+	if page > totalPages {
+		page = totalPages
+	}
 	start = (page - 1) * pageSize
 	if start > total {
 		start = total

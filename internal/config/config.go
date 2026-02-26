@@ -93,6 +93,9 @@ func (c *Config) Validate() error {
 }
 
 func joinErrors(errs []string) string {
+	if len(errs) == 0 {
+		return ""
+	}
 	result := errs[0]
 	for _, e := range errs[1:] {
 		result += "; " + e

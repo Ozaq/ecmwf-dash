@@ -7,8 +7,11 @@ import (
 
 func main() {
 	resp, err := http.Get("http://localhost:8000/health")
-	if err != nil || resp.StatusCode != 200 {
+	if err != nil {
 		os.Exit(1)
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		os.Exit(1)
+	}
 }

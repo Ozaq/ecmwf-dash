@@ -98,42 +98,42 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 func sortPullRequests(prs []github.PullRequest, sortBy, order string) {
 	switch sortBy {
 	case "repo":
-		sort.Slice(prs, func(i, j int) bool {
+		sort.SliceStable(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].Repository < prs[j].Repository
 			}
 			return prs[i].Repository > prs[j].Repository
 		})
 	case "number":
-		sort.Slice(prs, func(i, j int) bool {
+		sort.SliceStable(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].Number < prs[j].Number
 			}
 			return prs[i].Number > prs[j].Number
 		})
 	case "title":
-		sort.Slice(prs, func(i, j int) bool {
+		sort.SliceStable(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].Title < prs[j].Title
 			}
 			return prs[i].Title > prs[j].Title
 		})
 	case "author":
-		sort.Slice(prs, func(i, j int) bool {
+		sort.SliceStable(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].Author < prs[j].Author
 			}
 			return prs[i].Author > prs[j].Author
 		})
 	case "created":
-		sort.Slice(prs, func(i, j int) bool {
+		sort.SliceStable(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].CreatedAt.Before(prs[j].CreatedAt)
 			}
 			return prs[i].CreatedAt.After(prs[j].CreatedAt)
 		})
 	case "updated":
-		sort.Slice(prs, func(i, j int) bool {
+		sort.SliceStable(prs, func(i, j int) bool {
 			if order == "asc" {
 				return prs[i].UpdatedAt.Before(prs[j].UpdatedAt)
 			}

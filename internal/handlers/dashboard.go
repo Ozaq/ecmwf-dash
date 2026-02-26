@@ -140,42 +140,42 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 func sortIssues(issues []github.Issue, sortBy, order string) {
 	switch sortBy {
 	case "repo":
-		sort.Slice(issues, func(i, j int) bool {
+		sort.SliceStable(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].Repository < issues[j].Repository
 			}
 			return issues[i].Repository > issues[j].Repository
 		})
 	case "number":
-		sort.Slice(issues, func(i, j int) bool {
+		sort.SliceStable(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].Number < issues[j].Number
 			}
 			return issues[i].Number > issues[j].Number
 		})
 	case "title":
-		sort.Slice(issues, func(i, j int) bool {
+		sort.SliceStable(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].Title < issues[j].Title
 			}
 			return issues[i].Title > issues[j].Title
 		})
 	case "author":
-		sort.Slice(issues, func(i, j int) bool {
+		sort.SliceStable(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].Author < issues[j].Author
 			}
 			return issues[i].Author > issues[j].Author
 		})
 	case "created":
-		sort.Slice(issues, func(i, j int) bool {
+		sort.SliceStable(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].CreatedAt.Before(issues[j].CreatedAt)
 			}
 			return issues[i].CreatedAt.After(issues[j].CreatedAt)
 		})
 	case "updated":
-		sort.Slice(issues, func(i, j int) bool {
+		sort.SliceStable(issues, func(i, j int) bool {
 			if order == "asc" {
 				return issues[i].UpdatedAt.Before(issues[j].UpdatedAt)
 			}

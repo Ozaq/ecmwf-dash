@@ -21,6 +21,7 @@ func sanitizeLabelColor(color string) string {
 
 // computeTextColor returns "#ffffff" or "#000000" based on the relative
 // luminance of the given 6-digit hex color, using the WCAG formula.
+// Caller must ensure hexColor is exactly 6 hex characters (use sanitizeLabelColor first).
 func computeTextColor(hexColor string) string {
 	r, _ := strconv.ParseUint(hexColor[0:2], 16, 8)
 	g, _ := strconv.ParseUint(hexColor[2:4], 16, 8)
