@@ -35,7 +35,7 @@
         <caption class="sr-only">Open issues across repositories</caption>
         <thead>
             <tr>
-                <th aria-sort="{{if eq .Sort "repo"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "repo"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=repo&order={{if and (eq .Sort "repo") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Repository
                         <span class="sort-arrow {{if eq .Sort "repo"}}active{{end}}">
@@ -43,7 +43,7 @@
                         </span>
                     </a>
                 </th>
-                <th aria-sort="{{if eq .Sort "number"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "number"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=number&order={{if and (eq .Sort "number") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         #
                         <span class="sort-arrow {{if eq .Sort "number"}}active{{end}}">
@@ -51,7 +51,7 @@
                         </span>
                     </a>
                 </th>
-                <th aria-sort="{{if eq .Sort "title"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "title"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=title&order={{if and (eq .Sort "title") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Title
                         <span class="sort-arrow {{if eq .Sort "title"}}active{{end}}">
@@ -59,7 +59,7 @@
                         </span>
                     </a>
                 </th>
-                <th aria-sort="{{if eq .Sort "author"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "author"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=author&order={{if and (eq .Sort "author") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Author
                         <span class="sort-arrow {{if eq .Sort "author"}}active{{end}}">
@@ -67,7 +67,7 @@
                         </span>
                     </a>
                 </th>
-                <th aria-sort="{{if eq .Sort "updated"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "updated"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=updated&order={{if and (eq .Sort "updated") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Last Activity
                         <span class="sort-arrow {{if eq .Sort "updated"}}active{{end}}">
@@ -75,7 +75,7 @@
                         </span>
                     </a>
                 </th>
-                <th aria-sort="{{if eq .Sort "created"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
+                <th scope="col" aria-sort="{{if eq .Sort "created"}}{{if eq .Order "asc"}}ascending{{else}}descending{{end}}{{else}}none{{end}}">
                     <a href="?sort=created&order={{if and (eq .Sort "created") (eq .Order "asc")}}desc{{else}}asc{{end}}&page={{.CurrentPage}}&repo={{.Repo}}">
                         Created
                         <span class="sort-arrow {{if eq .Sort "created"}}active{{end}}">

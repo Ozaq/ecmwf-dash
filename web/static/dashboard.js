@@ -5,6 +5,8 @@
     // Auto-refresh every 60s — fetch-and-replace to preserve scroll + expanded state
     // TV mode has its own countdown-based reload, so skip it here.
     if (!document.documentElement.classList.contains('tv-mode')) {
+        var refreshFailures = 0;
+
         function scheduleRefresh() {
             setTimeout(function() {
                 fetch(window.location.href).then(function(resp) {
@@ -27,12 +29,28 @@
                         if (repo) expandedRepos.push(repo.textContent.trim());
                     }
 
+                    // Preserve focus before DOM swap
+                    var focusId = document.activeElement ? document.activeElement.id : null;
+                    var focusLabel = document.activeElement ? document.activeElement.getAttribute('aria-label') : null;
+
                     // Swap DOM nodes (no innerHTML — adopt parsed nodes directly)
                     while (currentContainer.firstChild) {
                         currentContainer.removeChild(currentContainer.firstChild);
                     }
                     while (newContainer.firstChild) {
                         currentContainer.appendChild(document.adoptNode(newContainer.firstChild));
+                    }
+
+                    // Restore focus
+                    if (focusId) {
+                        var focusEl = document.getElementById(focusId);
+                        if (focusEl) focusEl.focus();
+                    }
+                    if ((!focusId || !document.getElementById(focusId)) && focusLabel) {
+                        if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+                            var focusEl = document.querySelector('[aria-label="' + CSS.escape(focusLabel) + '"]');
+                            if (focusEl) focusEl.focus();
+                        }
                     }
 
                     // Restore expanded build rows
@@ -49,8 +67,26 @@
 
                     // Restore scroll position
                     window.scrollTo(0, scrollY);
+
+                    // Reset failure counter and remove banner on success
+                    refreshFailures = 0;
+                    var banner = document.querySelector('.refresh-error-banner');
+                    if (banner) banner.remove();
                 }).catch(function(err) {
-                    console.warn('Auto-refresh failed:', err);
+                    refreshFailures++;
+                    if (refreshFailures >= 3) {
+                        var banner = document.querySelector('.refresh-error-banner');
+                        if (!banner) {
+                            banner = document.createElement('div');
+                            banner.className = 'refresh-error-banner';
+                            banner.setAttribute('role', 'alert');
+                            banner.textContent = 'Auto-refresh failed. Retrying...';
+                            banner.style.cssText = 'background:#fce8ea;color:#b91c26;padding:4px 12px;font-size:13px;text-align:center;';
+                            var container = document.querySelector('.container');
+                            if (container) container.insertBefore(banner, container.firstChild);
+                        }
+                    }
+                    console.warn('Auto-refresh failed (attempt ' + refreshFailures + '):', err);
                 }).then(scheduleRefresh, scheduleRefresh);
             }, 60000);
         }
