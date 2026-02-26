@@ -10,13 +10,25 @@ import (
 	"github.com/ozaq/ecmwf-dash/internal/storage"
 )
 
+// GitHubFetcher abstracts the GitHub API calls used by the Fetcher.
+// Defined on the consumer side (Go convention); *github.Client satisfies it.
+type GitHubFetcher interface {
+	FetchIssues(ctx context.Context, org string, repos []config.RepositoryConfig) github.IssuesFetchResult
+	FetchPullRequests(ctx context.Context, org string, repos []config.RepositoryConfig) github.PRsFetchResult
+	FetchBranchChecks(ctx context.Context, org string, repos []config.RepositoryConfig) github.ChecksFetchResult
+	LogRate(r github.RateInfo)
+}
+
+// Compile-time check: *github.Client satisfies GitHubFetcher.
+var _ GitHubFetcher = (*github.Client)(nil)
+
 type Fetcher struct {
 	cfg     *config.Config
-	gh      *github.Client
+	gh      GitHubFetcher
 	storage storage.Store
 }
 
-func New(cfg *config.Config, gh *github.Client, store storage.Store) *Fetcher {
+func New(cfg *config.Config, gh GitHubFetcher, store storage.Store) *Fetcher {
 	return &Fetcher{
 		cfg:     cfg,
 		gh:      gh,
