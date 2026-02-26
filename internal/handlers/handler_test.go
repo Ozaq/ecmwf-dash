@@ -351,6 +351,68 @@ func TestBuildStatusHandlerStaleness(t *testing.T) {
 	})
 }
 
+func TestDashboardHandlerFilterByRepo(t *testing.T) {
+	h, store := newTestHandler(t)
+	store.SetIssues([]github.Issue{
+		{Repository: "eccodes", Number: 1, Title: "Eccodes grib bug", Author: "alice", URL: "#", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		{Repository: "atlas", Number: 2, Title: "Atlas mesh feature", Author: "bob", URL: "#", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	})
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/issues?repo=eccodes", nil)
+
+	h.Dashboard(rec, req)
+
+	assertResponse(t, rec, http.StatusOK, "Eccodes grib bug")
+
+	body := rec.Body.String()
+	if strings.Contains(body, "Atlas mesh feature") {
+		t.Error("body should not contain atlas issue title when filtering by eccodes")
+	}
+}
+
+func TestPullRequestsHandlerFilterByRepo(t *testing.T) {
+	h, store := newTestHandler(t)
+	store.SetPullRequests([]github.PullRequest{
+		{
+			Repository:   "eccodes",
+			Number:       10,
+			Title:        "Eccodes decoder refactor",
+			Author:       "alice",
+			URL:          "#",
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+			BaseBranch:   "develop",
+			HeadBranch:   "feat-decode",
+			ReviewStatus: "pending",
+		},
+		{
+			Repository:   "atlas",
+			Number:       20,
+			Title:        "Atlas grid improvement",
+			Author:       "bob",
+			URL:          "#",
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+			BaseBranch:   "main",
+			HeadBranch:   "feat-grid",
+			ReviewStatus: "approved",
+		},
+	})
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/pulls?repo=eccodes", nil)
+
+	h.PullRequests(rec, req)
+
+	assertResponse(t, rec, http.StatusOK, "Eccodes decoder refactor")
+
+	body := rec.Body.String()
+	if strings.Contains(body, "Atlas grid improvement") {
+		t.Error("body should not contain atlas PR title when filtering by eccodes")
+	}
+}
+
 // assertResponse checks status code, content type, and that the body contains all expected strings.
 func assertResponse(t *testing.T, rec *httptest.ResponseRecorder, wantStatus int, wantContains ...string) {
 	t.Helper()
