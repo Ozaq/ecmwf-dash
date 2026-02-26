@@ -1,5 +1,5 @@
 {{define "tv-branch-section"}}
-<div class="branch-section {{if .IsMain}}branch-main{{else if eq .Branch "develop"}}branch-develop{{else}}branch-other{{end}} {{if gt .FailureCount 0}}has-failures{{else if gt .RunningCount 0}}has-running{{end}}">
+<div class="branch-section {{if .IsMain}}branch-main{{else if eq .Branch "develop"}}branch-develop{{else}}branch-other{{end}} {{if gt .FailureCount 0}}has-failures{{end}}">
     <div class="branch-header">
         <span class="branch-name">{{.Branch}}</span>
         {{if .HasChecks}}
@@ -52,7 +52,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Organization}} — Build Status Dashboard</title>
     <link rel="stylesheet" href="/static/base.css">
-    <link rel="stylesheet" href="/static/builds.css">
     <link rel="stylesheet" href="/static/tv.css">
 </head>
 <body>
@@ -60,7 +59,7 @@
         <div class="tv-status-bar">
             <span>{{.Organization}} — Build Status</span>
             <div class="tv-status-right">
-                <span class="tv-updated">Updated {{.LastUpdate.Format "15:04:05"}}</span>
+                <span>Updated {{.LastUpdate.Format "15:04:05"}}</span>
                 <span class="tv-countdown" id="tv-countdown"></span>
             </div>
         </div>

@@ -37,7 +37,7 @@
 .build-repo {
     font-size: 15px;
     font-weight: 600;
-    color: var(--primary-text);
+    color: var(--text-color);
     text-decoration: none;
     white-space: nowrap;
     overflow: hidden;
@@ -212,7 +212,7 @@
 }
 
 .detail-check a {
-    color: var(--primary-text);
+    color: var(--text-color);
     text-decoration: none;
 }
 
