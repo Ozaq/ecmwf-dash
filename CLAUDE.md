@@ -50,7 +50,7 @@ Note: `config.yaml` is NOT baked into the Docker image. Mount it at runtime. The
 - `internal/github/` — GitHub API client wrapper. `types.go` defines all data models + `isInternal()`. `review.go` contains `DeriveReviewStatus()` (extracted, testable). `helpers.go` has `sanitizeLabelColor()`, `computeTextColor()`, and `computeLabelStyle()` for safe label rendering. `checks.go` has `ClassifyCheck()` — the single source of truth for check status classification. Separate files for issues, pulls, and actions fetching. Rate info returned from fetch functions (no extra API calls).
 - `internal/storage/` — `Store` interface + `Memory` implementation. Thread-safe with deep-copy on both reads and writes. `LastFetchTimes()` and `RepoFetchTimes(category)` on the Store interface for health endpoint and per-repo staleness. `Merge*` methods for partial-failure updates (preserve existing data for failed repos, update succeeded repos). Category constants (`CategoryIssues`, `CategoryPRs`, `CategoryChecks`) prevent string-literal typos.
 - `internal/handlers/` — HTTP handlers for three views: `/builds`, `/pulls`, `/issues`. `render.go` provides buffered template execution. `params.go` has shared input validation (`sanitizeSort`, `sanitizeOrder`, `sanitizeRepo`) and `paginate()`. `staleness.go` has `staleRepos()` helper, `computeStaleness()` method, and `FetchIntervals` type (deliberately separate from config to avoid import dependency). `funcmap.go` exports `TemplateFuncs()` — single source of truth for template functions. `HandlerConfig` struct replaces positional params in `New()`.
-- `internal/fetcher/` — Orchestrates background polling goroutines with context cancellation. Uses `Store.Merge*` (not `Set*`) for partial-failure tolerance. No test coverage — depends on concrete `*github.Client` (no interface).
+- `internal/fetcher/` — Orchestrates background polling goroutines with context cancellation. Uses `Store.Merge*` (not `Set*`) for partial-failure tolerance. `GitHubFetcher` interface (consumer-side, defined in fetcher package) decouples from concrete `*github.Client` for testability.
 
 **Frontend**: Server-rendered Go templates in `web/templates/`, static assets in `web/static/`.
 
@@ -108,7 +108,7 @@ server:
 - **DISMISSED reviews**: A DISMISSED review removes the reviewer from the review map, reverting to their previous state (or removing them entirely).
 - **Healthcheck hardcodes port 8000**: `cmd/healthcheck/main.go` always hits `localhost:8000`. Changing the port in `config.yaml` without updating the healthcheck binary will cause Docker health checks to fail.
 - **Fetchers use partial failure tolerance**: Per-repo errors are logged and skipped; `Merge*` preserves existing data for failed repos. An error is returned only if ALL repos fail. Stale repos are surfaced in the UI via a banner and per-row visual indicators (threshold: 3x fetch interval).
-- **`go-github` aliased as `gh`**: All files in `internal/github/` import `github.com/google/go-github/v66/github` as `gh` to avoid collision with the internal `github` package. New fetch code must follow the `gh` convention.
+- **`go-github` aliased as `gh`**: All files in `internal/github/` import `github.com/google/go-github/v83/github` as `gh` to avoid collision with the internal `github` package. New fetch code must follow the `gh` convention.
 - **Check classification via ClassifyCheck()**: Both PR and builds views use `github.ClassifyCheck(status, conclusion)` for consistent classification. Only explicit `"success"` passes; running states return `"running"`; everything else (including `neutral`, `stale`) returns `"failure"`.
 - **Auto-refresh**: All views use fetch-and-replace (preserves scroll/expanded state). TV mode rebuilds countdown DOM and recalculates grid after each DOM swap. Falls back to `window.location.reload()` after 3 consecutive fetch failures.
 - **Staleness computation centralized**: `Handler.computeStaleness()` in `staleness.go` handles cold-start detection, threshold computation, and nil-guarding. All four handlers call it with one line.
@@ -131,16 +131,15 @@ server:
 - `GITHUB_TOKEN` (required) — GitHub personal access token for API access
 - No CLI flags — all configuration is via `config.yaml` and environment variables
 - `config.yaml` is gitignored — must be created locally or mounted at runtime
-- CI/CD: `.github/workflows/release.yml` runs tests then builds and pushes Docker image to Harbor on GitHub release (tagged with both the release version and `latest`)
+- CI/CD: `.github/workflows/release.yml` runs tests, builds Docker image locally, scans with Trivy (blocking on CRITICAL/HIGH), then pushes the scanned image to Harbor via `docker push` (no rebuild — same image identity). Tagged with both the release version and `latest`.
 - `.github/workflows/ci.yml` runs tests with `-race`, vet, `govulncheck`, and a Docker build (no push) on push/PR
 
 ## Development Status
 
-- Test suite covers storage (deep-copy, concurrency, merge semantics), config validation, review status logic, label color helpers, check classification (`ClassifyCheck`), handler HTTP responses (with real templates), builds grouping/ordering, parameter sanitization (incl. injection edge cases), sort functions (all fields + both orders), and staleness computation
-- **Untested**: `internal/fetcher/` (no test files — blocked on `github.Client` having no interface), `renderTemplate` error paths, constructor nil-panic paths
+- Test suite covers storage (deep-copy, concurrency, merge semantics), config validation, review status logic, label color helpers, check classification (`ClassifyCheck`), handler HTTP responses (with real templates), builds grouping/ordering, parameter sanitization (incl. injection edge cases), sort functions (all fields + both orders), staleness computation, and fetcher (success/failure/partial-failure paths, context cancellation, goroutine lifecycle)
+- **Untested**: `renderTemplate` error paths, constructor nil-panic paths
 - Race detector enabled in CI and Makefile
-- Security scanning via govulncheck (CI and release) and Trivy (release)
-- Trivy scan is informational only (`exit-code: 0`) — won't block releases on vulnerabilities
+- Security scanning via govulncheck (CI and release) and Trivy (release, blocking on CRITICAL/HIGH)
 - All CI actions pinned to full SHA (supply chain security)
 - No linter configuration (uses `go vet`)
-- go-github v66 — 4 major versions behind current (v70)
+- go-github v83 — latest stable
