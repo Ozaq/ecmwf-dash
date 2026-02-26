@@ -7,12 +7,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/go-github/v66/github"
+	gh "github.com/google/go-github/v66/github"
 	"golang.org/x/oauth2"
 )
 
 type Client struct {
-	gh *github.Client
+	gh *gh.Client
 }
 
 func NewClient() (*Client, error) {
@@ -32,7 +32,7 @@ func NewClient() (*Client, error) {
 	tc.Timeout = 30 * time.Second
 
 	return &Client{
-		gh: github.NewClient(tc),
+		gh: gh.NewClient(tc),
 	}, nil
 }
 
@@ -53,7 +53,7 @@ func (c *Client) LogRate(r RateInfo) {
 }
 
 // rateFromResponse extracts RateInfo from a GitHub API response.
-func rateFromResponse(resp *github.Response) RateInfo {
+func rateFromResponse(resp *gh.Response) RateInfo {
 	return RateInfo{
 		Remaining: resp.Rate.Remaining,
 		Limit:     resp.Rate.Limit,
