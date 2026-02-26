@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECMWF GitHub Dashboard - {{template "title" .}}</title>
-    <link rel="stylesheet" href="/static/base.css">
+    <link rel="stylesheet" href="static/base.css">
     {{template "extra-css" .}}
 </head>
 <body>
@@ -12,9 +12,9 @@
         <header class="header">
             <h1>ECMWF GitHub Dashboard - {{template "title" .}}</h1>
             <nav class="nav-links" aria-label="Main navigation">
-                <a href="/builds" {{if eq .PageID "builds"}}class="active" aria-current="page"{{end}}>Build Status</a>
-                <a href="/pulls" {{if eq .PageID "pulls"}}class="active" aria-current="page"{{end}}>Pull Requests</a>
-                <a href="/issues" {{if eq .PageID "issues"}}class="active" aria-current="page"{{end}}>Issues</a>
+                <a href="builds" {{if eq .PageID "builds"}}class="active" aria-current="page"{{end}}>Build Status</a>
+                <a href="pulls" {{if eq .PageID "pulls"}}class="active" aria-current="page"{{end}}>Pull Requests</a>
+                <a href="issues" {{if eq .PageID "issues"}}class="active" aria-current="page"{{end}}>Issues</a>
             </nav>
             <div class="header-info">
                 {{template "stats" .}}
@@ -36,6 +36,6 @@
         </footer>
     </div>
 
-    <script src="/static/dashboard.js"></script>
+    <script src="static/dashboard.js"></script>
 </body>
 </html>{{end}}

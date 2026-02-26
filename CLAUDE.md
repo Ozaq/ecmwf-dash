@@ -66,7 +66,7 @@ Note: `config.yaml` IS baked into the Docker image at build time. To use a diffe
 
 | Path | Handler | Description |
 |------|---------|-------------|
-| `/` | redirect | Redirects to `/builds` |
+| `/` | redirect | Redirects to `builds` (relative) |
 | `/builds` | BuildStatus | CI check status per repo/branch |
 | `/builds-dashboard` | BuildsDashboard | TV/kiosk mode for builds (standalone, no base.html) |
 | `/pulls` | PullRequests | Open PRs with reviews and checks |
@@ -97,6 +97,7 @@ server:
 
 ## Gotchas
 
+- **Templates use relative paths for reverse proxy compatibility**: All `href`/`src` in templates are relative (`href="builds"`, `href="static/base.css"`), not absolute (`/builds`). The root redirect also uses `"builds"` (relative). This ensures the app works behind a reverse proxy at any path prefix (e.g., `sites.ecmwf.int/ecm7593/gh/`). Works because all routes are single-level siblings — the browser replaces the last path segment. **Do not change these to absolute paths.**
 - **Builds view renders all configured branches**: The handler uses `repoConfig` (from `config.yaml`) to determine which branches to display per repo. Branch order matches config order. Repos not in config are appended alphabetically with branches from API data.
 - **GitHub API rate limits**: 12 repos x 2 branches = frequent polling. Rate limit warnings appear in logs when remaining < 100.
 - **`CONTRIBUTOR` is treated as external**: `isInternal` only matches `OWNER`, `MEMBER`, or `COLLABORATOR`. Past contributors with merged PRs who aren't collaborators get the "external" badge.
