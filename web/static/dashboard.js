@@ -114,13 +114,39 @@
             countdownEl.appendChild(suf);
         }
 
+        function refreshDashboard() {
+            fetch(window.location.href).then(function(resp) {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.text();
+            }).then(function(html) {
+                var container = document.querySelector('.tv-container');
+                if (!container) return;
+
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var newContainer = doc.querySelector('.tv-container');
+                if (!newContainer) return;
+
+                while (container.firstChild) {
+                    container.removeChild(container.firstChild);
+                }
+                while (newContainer.firstChild) {
+                    container.appendChild(document.adoptNode(newContainer.firstChild));
+                }
+            }).catch(function(err) {
+                console.warn('TV refresh failed, falling back to reload:', err);
+                window.location.reload();
+            });
+        }
+
         function tick() {
             var left = Math.max(0, Math.ceil((reloadAt - Date.now()) / 1000));
             if (numSpan) {
                 numSpan.textContent = left;
             }
             if (left <= 0) {
-                window.location.reload();
+                refreshDashboard();
+                // Reset countdown for next cycle
+                reloadAt = Date.now() + REFRESH_MS;
             }
         }
 
