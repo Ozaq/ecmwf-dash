@@ -45,18 +45,7 @@ func (h *Handler) PullRequests(w http.ResponseWriter, r *http.Request) {
 		pagePRs = prs[start:end]
 	}
 
-	// Compute staleness (skip on cold start)
-	var staleMap map[string]bool
-	var staleList []string
-	if !lastUpdate.IsZero() {
-		repoTimes := h.storage.RepoFetchTimes("prs")
-		threshold := h.fetchIntervals.PullRequests * 3
-		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
-		staleList = sortedKeys(staleMap)
-	}
-	if staleMap == nil {
-		staleMap = make(map[string]bool)
-	}
+	staleMap, staleList := h.computeStaleness("prs", h.fetchIntervals.PullRequests, lastUpdate)
 
 	data := struct {
 		PageID        string

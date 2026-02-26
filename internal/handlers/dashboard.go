@@ -25,30 +25,44 @@ type Handler struct {
 	fetchIntervals    FetchIntervals
 }
 
-func New(store storage.Store, issuesTmpl *template.Template, prsTmpl *template.Template, buildTmpl *template.Template, dashboardTmpl *template.Template, org string, version string, repoNames []string, repoConfig []RepoBranches, intervals FetchIntervals) *Handler {
-	if issuesTmpl == nil {
-		panic("issuesTmpl must not be nil")
+// HandlerConfig groups the parameters needed to construct a Handler.
+type HandlerConfig struct {
+	Store          storage.Store
+	IssuesTmpl     *template.Template
+	PRsTmpl        *template.Template
+	BuildTmpl      *template.Template
+	DashboardTmpl  *template.Template
+	Organization   string
+	Version        string
+	RepoNames      []string
+	RepoConfig     []RepoBranches
+	FetchIntervals FetchIntervals
+}
+
+func New(cfg HandlerConfig) *Handler {
+	if cfg.IssuesTmpl == nil {
+		panic("IssuesTmpl must not be nil")
 	}
-	if prsTmpl == nil {
-		panic("prsTmpl must not be nil")
+	if cfg.PRsTmpl == nil {
+		panic("PRsTmpl must not be nil")
 	}
-	if buildTmpl == nil {
-		panic("buildTmpl must not be nil")
+	if cfg.BuildTmpl == nil {
+		panic("BuildTmpl must not be nil")
 	}
-	if dashboardTmpl == nil {
-		panic("dashboardTmpl must not be nil")
+	if cfg.DashboardTmpl == nil {
+		panic("DashboardTmpl must not be nil")
 	}
 	return &Handler{
-		storage:           store,
-		template:          issuesTmpl,
-		prTemplate:        prsTmpl,
-		buildTemplate:     buildTmpl,
-		dashboardTemplate: dashboardTmpl,
-		organization:      org,
-		version:           version,
-		repoNames:         repoNames,
-		repoConfig:        repoConfig,
-		fetchIntervals:    intervals,
+		storage:           cfg.Store,
+		template:          cfg.IssuesTmpl,
+		prTemplate:        cfg.PRsTmpl,
+		buildTemplate:     cfg.BuildTmpl,
+		dashboardTemplate: cfg.DashboardTmpl,
+		organization:      cfg.Organization,
+		version:           cfg.Version,
+		repoNames:         cfg.RepoNames,
+		repoConfig:        cfg.RepoConfig,
+		fetchIntervals:    cfg.FetchIntervals,
 	}
 }
 
@@ -87,18 +101,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		pageIssues = issues[start:end]
 	}
 
-	// Compute staleness (skip on cold start)
-	var staleMap map[string]bool
-	var staleList []string
-	if !lastUpdate.IsZero() {
-		repoTimes := h.storage.RepoFetchTimes("issues")
-		threshold := h.fetchIntervals.Issues * 3
-		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
-		staleList = sortedKeys(staleMap)
-	}
-	if staleMap == nil {
-		staleMap = make(map[string]bool)
-	}
+	staleMap, staleList := h.computeStaleness("issues", h.fetchIntervals.Issues, lastUpdate)
 
 	data := struct {
 		PageID        string

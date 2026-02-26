@@ -71,7 +71,18 @@ func newTestHandler(t *testing.T) (*Handler, *storage.Memory) {
 		PullRequests: 5 * time.Minute,
 		Actions:      5 * time.Minute,
 	}
-	h := New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, "ecmwf", "test", repoNames, repoConfig, intervals)
+	h := New(HandlerConfig{
+		Store:          store,
+		IssuesTmpl:     issuesTmpl,
+		PRsTmpl:        prsTmpl,
+		BuildTmpl:      buildsTmpl,
+		DashboardTmpl:  dashboardTmpl,
+		Organization:   "ecmwf",
+		Version:        "test",
+		RepoNames:      repoNames,
+		RepoConfig:     repoConfig,
+		FetchIntervals: intervals,
+	})
 	return h, store
 }
 

@@ -34,6 +34,22 @@ func staleRepos(repoTimes map[string]time.Time, threshold time.Duration, allRepo
 	return stale
 }
 
+// computeStaleness returns a (staleMap, sortedStaleList) pair for the given
+// fetch category. On cold start (zero lastUpdate) it returns an empty map
+// and nil list.
+func (h *Handler) computeStaleness(category string, interval time.Duration, lastUpdate time.Time) (map[string]bool, []string) {
+	if lastUpdate.IsZero() {
+		return make(map[string]bool), nil
+	}
+	repoTimes := h.storage.RepoFetchTimes(category)
+	threshold := interval * 3
+	staleMap := staleRepos(repoTimes, threshold, h.repoNames)
+	if staleMap == nil {
+		return make(map[string]bool), nil
+	}
+	return staleMap, sortedKeys(staleMap)
+}
+
 // sortedKeys returns the keys of a map sorted alphabetically.
 func sortedKeys(m map[string]bool) []string {
 	if len(m) == 0 {

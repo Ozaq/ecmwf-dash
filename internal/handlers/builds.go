@@ -170,18 +170,7 @@ func (h *Handler) BuildStatus(w http.ResponseWriter, r *http.Request) {
 		repositories = filtered
 	}
 
-	// Compute staleness (skip on cold start)
-	var staleMap map[string]bool
-	var staleList []string
-	if !lastUpdate.IsZero() {
-		repoTimes := h.storage.RepoFetchTimes("checks")
-		threshold := h.fetchIntervals.Actions * 3
-		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
-		staleList = sortedKeys(staleMap)
-	}
-	if staleMap == nil {
-		staleMap = make(map[string]bool)
-	}
+	staleMap, staleList := h.computeStaleness("checks", h.fetchIntervals.Actions, lastUpdate)
 	for _, r := range repositories {
 		r.Stale = staleMap[r.Name]
 	}
@@ -237,18 +226,7 @@ func (h *Handler) BuildsDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	sortByConfigOrder(repositories, h.repoNames)
 
-	// Compute staleness (skip on cold start)
-	var staleMap map[string]bool
-	var staleList []string
-	if !lastUpdate.IsZero() {
-		repoTimes := h.storage.RepoFetchTimes("checks")
-		threshold := h.fetchIntervals.Actions * 3
-		staleMap = staleRepos(repoTimes, threshold, h.repoNames)
-		staleList = sortedKeys(staleMap)
-	}
-	if staleMap == nil {
-		staleMap = make(map[string]bool)
-	}
+	staleMap, staleList := h.computeStaleness("checks", h.fetchIntervals.Actions, lastUpdate)
 	for _, repo := range repositories {
 		repo.Stale = staleMap[repo.Name]
 	}

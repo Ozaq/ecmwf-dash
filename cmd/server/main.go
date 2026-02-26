@@ -112,12 +112,22 @@ func main() {
 	}
 
 	// Create handler
-	intervals := handlers.FetchIntervals{
-		Issues:       cfg.FetchIntervals.Issues,
-		PullRequests: cfg.FetchIntervals.PullRequests,
-		Actions:      cfg.FetchIntervals.Actions,
-	}
-	handler := handlers.New(store, issuesTmpl, prsTmpl, buildsTmpl, dashboardTmpl, cfg.GitHub.Organization, Version, repoNames, repoConfig, intervals)
+	handler := handlers.New(handlers.HandlerConfig{
+		Store:         store,
+		IssuesTmpl:    issuesTmpl,
+		PRsTmpl:       prsTmpl,
+		BuildTmpl:     buildsTmpl,
+		DashboardTmpl: dashboardTmpl,
+		Organization:  cfg.GitHub.Organization,
+		Version:       Version,
+		RepoNames:     repoNames,
+		RepoConfig:    repoConfig,
+		FetchIntervals: handlers.FetchIntervals{
+			Issues:       cfg.FetchIntervals.Issues,
+			PullRequests: cfg.FetchIntervals.PullRequests,
+			Actions:      cfg.FetchIntervals.Actions,
+		},
+	})
 
 	// Setup routes
 	mux := http.NewServeMux()
