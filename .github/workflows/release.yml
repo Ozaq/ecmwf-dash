@@ -68,12 +68,6 @@ jobs:
           severity: CRITICAL,HIGH
 
       - name: Push Docker image to eccr
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
-        with:
-          context: .
-          push: true
-          cache-from: type=gha
-          build-args: VERSION=${{ github.event.release.tag_name }}
-          tags: |
-            ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:${{ github.event.release.tag_name }}
-            ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:latest
+        run: |
+          docker push ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:${{ github.event.release.tag_name }}
+          docker push ${{ secrets.HARBOR_REGISTRY }}/gh-dash/ecmwf-dash:latest
