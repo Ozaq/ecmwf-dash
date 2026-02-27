@@ -9,7 +9,7 @@
     Showing {{if .Issues}}{{add (mul (add .CurrentPage -1) 100) 1}}-{{add (mul (add .CurrentPage -1) 100) (len .Issues)}}{{else}}0{{end}} of {{.TotalIssues}}
 </div>
 {{if .RepoNames}}
-<form class="filter-form" id="repo-filter-form" method="get">
+<form class="filter-form" id="repo-filter-form" method="get" action="issues">
     <input type="hidden" name="sort" value="{{.Sort}}">
     <input type="hidden" name="order" value="{{.Order}}">
     <label for="repo-filter" class="sr-only">Filter by repository</label>

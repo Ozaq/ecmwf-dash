@@ -126,13 +126,14 @@ func main() {
 		}
 	})
 
-	// Root redirects to /builds; unmatched paths get 404
+	// Root serves builds directly (no redirect — avoids path issues behind reverse proxies).
+	// Unmatched paths get 404.
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return
 		}
-		http.Redirect(w, r, "builds", http.StatusFound)
+		handler.BuildStatus(w, r)
 	})
 
 	wrapped := securityHeaders(logMiddleware(mux))

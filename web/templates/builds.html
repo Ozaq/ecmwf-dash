@@ -8,7 +8,7 @@
     Repositories: {{len .Repositories}}
 </div>
 {{if .RepoNames}}
-<form class="filter-form" id="repo-filter-form" method="get">
+<form class="filter-form" id="repo-filter-form" method="get" action="builds">
     <label for="repo-filter" class="sr-only">Filter by repository</label>
     <select id="repo-filter" name="repo">
         <option value="">All repositories</option>
