@@ -58,10 +58,11 @@
 
 /* ===== Single lane (one branch) ===== */
 .build-lane {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 2px 8px;
     min-height: 20px;
+    align-items: center;
 }
 
 .lane-branch {
@@ -70,8 +71,6 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--secondary-text);
-    width: 64px;
-    flex-shrink: 0;
 }
 
 /* ===== All-green affirmation ===== */
@@ -79,6 +78,7 @@
     font-style: italic;
     font-size: 13px;
     color: var(--success-color);
+    grid-column: 2;
 }
 
 /* ===== No checks ===== */
@@ -86,6 +86,7 @@
     font-style: italic;
     font-size: 12px;
     color: var(--muted-text);
+    grid-column: 2;
 }
 
 /* ===== Dot strip ===== */
@@ -93,28 +94,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
-    max-height: 38px;
-    overflow: hidden;
     align-items: flex-start;
-    position: relative;
-}
-
-/* Fade-out gradient when dots overflow */
-.lane-strip::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 12px;
-    background: linear-gradient(transparent, var(--card-bg));
-    pointer-events: none;
-    opacity: 0; /* hidden by default, shown via JS or :has() */
-}
-
-/* Show fade when strip has enough dots to potentially overflow (>3 rows) */
-.lane-strip:has(.lane-dot:nth-child(n+16))::after {
-    opacity: 1;
+    grid-column: 2;
 }
 
 .lane-dot {
@@ -148,16 +129,17 @@
 
 /* ===== Compact counts ===== */
 .lane-counts {
+    grid-column: 2;
     display: flex;
-    gap: 6px;
-    font-size: 11px;
+    gap: 8px;
+    font-size: 12px;
     font-weight: 600;
-    flex-shrink: 0;
-    white-space: nowrap;
 }
 
+.count-success { color: var(--success-color); }
 .count-failure { color: var(--error-color); }
 .count-running { color: var(--warning-text); }
+.count-zero { color: var(--muted-text); }
 
 /* ===== Chevron ===== */
 .build-chevron {
@@ -272,8 +254,11 @@
         grid-column: 1;
     }
 
+    .build-lane {
+        grid-template-columns: 52px 1fr;
+    }
+
     .lane-branch {
-        width: 52px;
         font-size: 9px;
     }
 

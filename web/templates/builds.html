@@ -24,9 +24,6 @@
 <div class="build-lane">
     <span class="lane-branch">{{.Branch}}</span>
     {{if .HasChecks}}
-        {{if and (eq .FailureCount 0) (eq .RunningCount 0)}}
-        <span class="lane-affirm">{{affirm}}</span>
-        {{else}}
         <div class="lane-strip">
             {{range .Checks}}
             <a href="{{.URL}}" target="_blank" rel="noopener noreferrer"
@@ -37,10 +34,10 @@
             {{end}}
         </div>
         <span class="lane-counts">
-            {{if gt .FailureCount 0}}<span class="count-failure">&#x2715;{{.FailureCount}}</span>{{end}}
-            {{if gt .RunningCount 0}}<span class="count-running">&#x25CB;{{.RunningCount}}</span>{{end}}
+            <span class="count-success{{if eq .SuccessCount 0}} count-zero{{end}}">{{.SuccessCount}} passed</span>
+            <span class="count-failure{{if eq .FailureCount 0}} count-zero{{end}}">{{.FailureCount}} failed</span>
+            <span class="count-running{{if eq .RunningCount 0}} count-zero{{end}}">{{.RunningCount}} running</span>
         </span>
-        {{end}}
     {{else}}
     <span class="lane-empty">No checks</span>
     {{end}}

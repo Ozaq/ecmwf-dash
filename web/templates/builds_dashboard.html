@@ -1,20 +1,19 @@
 {{define "tv-branch-section"}}
-<div class="branch-section {{if .IsMain}}branch-main{{else if eq .Branch "develop"}}branch-develop{{else}}branch-other{{end}} {{if gt .FailureCount 0}}has-failures{{end}}">
+<div class="branch-section {{if .IsMain}}branch-main{{else if eq .Branch "develop"}}branch-develop{{else}}branch-other{{end}} {{if and (eq .FailureCount 0) (eq .RunningCount 0) .HasChecks}}all-passed{{end}} {{if gt .FailureCount 0}}has-failures{{end}}">
     <div class="branch-header">
         <span class="branch-name">{{.Branch}}</span>
-        {{if .HasChecks}}
         <div class="branch-summary">
-            {{if and (eq .FailureCount 0) (eq .RunningCount 0)}}
-            <span class="summary-pill pill-success">{{affirm}}</span>
-            {{else}}
-            {{if gt .SuccessCount 0}}<span class="summary-count count-success">{{.SuccessCount}} ok</span>{{end}}
-            {{if gt .FailureCount 0}}<span class="summary-count count-failure">{{.FailureCount}} failed</span>{{end}}
-            {{if gt .RunningCount 0}}<span class="summary-count count-running">{{.RunningCount}} running</span>{{end}}
-            {{end}}
+            <span class="summary-count count-success{{if eq .SuccessCount 0}} count-zero{{end}}">{{.SuccessCount}} passed</span>
+            <span class="summary-count count-failure{{if eq .FailureCount 0}} count-zero{{end}}">{{.FailureCount}} failed</span>
+            <span class="summary-count count-running{{if eq .RunningCount 0}} count-zero{{end}}">{{.RunningCount}} running</span>
         </div>
-        {{end}}
     </div>
     {{if .HasChecks}}
+        {{if and (eq .FailureCount 0) (eq .RunningCount 0)}}
+        <div class="branch-success">
+            <span class="summary-pill pill-success">{{affirm}}</span>
+        </div>
+        {{end}}
         {{if gt .FailureCount 0}}
         <ul class="failure-list">
             {{range .Checks}}
